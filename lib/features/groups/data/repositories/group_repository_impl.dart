@@ -304,12 +304,9 @@ class GroupRepositoryImpl implements GroupRepository {
     required String batch,
     String? semester,
   }) {
-    Query<Map<String, dynamic>> q = _groups
+    final Query<Map<String, dynamic>> q = _groups
         .where('dept', isEqualTo: dept)
         .where('batch', isEqualTo: batch);
-    if (semester != null) {
-      q = q.where('semester', isEqualTo: semester);
-    }
     return q.snapshots();
   }
 

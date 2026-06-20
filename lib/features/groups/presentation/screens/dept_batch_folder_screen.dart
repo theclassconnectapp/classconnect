@@ -133,8 +133,15 @@ class _DeptBatchFolderScreenState extends State<DeptBatchFolderScreen> {
               }
               final List<QueryDocumentSnapshot<Map<String, dynamic>>> docs =
                   snapshot.data?.docs ?? [];
+              final List<QueryDocumentSnapshot<Map<String, dynamic>>>
+              filteredDocs = docs.where((doc) {
+                final Map<String, dynamic> data = doc.data();
+                final Object? isGeneral = data['isGeneral'];
+                final String docSemester = (data['semester'] as String?) ?? '';
+                return isGeneral == true || docSemester == resolvedSem;
+              }).toList();
 
-              docs.sort((a, b) {
+              filteredDocs.sort((a, b) {
                 final String typeA = (a.data()['type'] as String?) ?? '';
                 final String typeB = (b.data()['type'] as String?) ?? '';
                 if (typeA == typeB) return 0;
@@ -143,7 +150,9 @@ class _DeptBatchFolderScreenState extends State<DeptBatchFolderScreen> {
                 return 0;
               });
 
-              final int totalItems = docs.isEmpty ? 1 : docs.length + 1;
+              final int totalItems = filteredDocs.isEmpty
+                  ? 1
+                  : filteredDocs.length + 1;
 
               return ListView.separated(
                 padding: const EdgeInsets.all(16),
@@ -153,9 +162,9 @@ class _DeptBatchFolderScreenState extends State<DeptBatchFolderScreen> {
                   if (index == 0) {
                     return _AiCard(onTap: () => _openAi());
                   }
-                  if (docs.isEmpty) return const SizedBox.shrink();
+                  if (filteredDocs.isEmpty) return const SizedBox.shrink();
                   final QueryDocumentSnapshot<Map<String, dynamic>> doc =
-                      docs[index - 1];
+                      filteredDocs[index - 1];
                   final Map<String, dynamic> data = doc.data();
                   final GroupModel group = GroupModel.fromDoc(doc);
                   final DateTime? previewTime =
