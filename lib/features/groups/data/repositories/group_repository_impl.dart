@@ -274,6 +274,7 @@ class GroupRepositoryImpl implements GroupRepository {
     }
 
     final List<Filter> filters = scopes.take(30).map(_filterForScope).toList();
+    print('DEBUG: scopes=$scopes, filters=$filters, filterCount=${filters.length}');
     if (filters.length == 1) {
       return _groups.where(filters.first).snapshots();
     }
