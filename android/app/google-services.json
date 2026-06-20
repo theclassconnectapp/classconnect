@@ -12,7 +12,28 @@
           "package_name": "com.example.class_connect"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "703382214228-d6lmjvoudl5nn1vb19in9e3qgl6d5g1i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.class_connect",
+            "certificate_hash": "c7bccbafde1ab722bf91ed1058a8e55d6057ae92"
+          }
+        },
+        {
+          "client_id": "703382214228-u6gmqvhukpdaivrnsm7utmdg9rs8rs27.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.class_connect",
+            "certificate_hash": "fd896e569bdcb9d621189359681dda6d7ec7ffff"
+          }
+        },
+        {
+          "client_id": "703382214228-r8psaei6tcq2c5hairjiractfjh79h5a.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCXIpXWbQg1A6cHp0jlyIElCesDYiOHTUc"
@@ -20,7 +41,71 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "703382214228-r8psaei6tcq2c5hairjiractfjh79h5a.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "703382214228-8gk9e1ocr3rljd38qh2jp424ljmb4ldj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.classConnect"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:703382214228:android:b743ccc5fc8e9fe402bfc1",
+        "android_client_info": {
+          "package_name": "com.theclassconnect.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "703382214228-5mvrduhhrpvvn8ti1qi04238cmu4d0de.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.theclassconnect.app",
+            "certificate_hash": "fd896e569bdcb9d621189359681dda6d7ec7ffff"
+          }
+        },
+        {
+          "client_id": "703382214228-d1chrmepb7bgb2fjc8fhft22bvqo3nd4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.theclassconnect.app",
+            "certificate_hash": "54e8be39496901d470f569a4e50a91503695a579"
+          }
+        },
+        {
+          "client_id": "703382214228-r8psaei6tcq2c5hairjiractfjh79h5a.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXIpXWbQg1A6cHp0jlyIElCesDYiOHTUc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "703382214228-r8psaei6tcq2c5hairjiractfjh79h5a.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "703382214228-8gk9e1ocr3rljd38qh2jp424ljmb4ldj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.classConnect"
+              }
+            }
+          ]
         }
       }
     }

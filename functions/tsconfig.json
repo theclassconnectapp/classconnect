@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "noImplicitAny": true,
+    "outDir": "lib",
+    "rootDir": "src",
+    "sourceMap": true,
+    "strict": true,
+    "target": "es2020",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "compileOnSave": true,
+  "include": [
+    "src"
+  ]
+}
+/// we are doing it manually so that we can conditionally inject UserRepository into AuthCubit only after college is set. This is because UserRepository needs college info to fetch user data, and college info is only available after the user picks a college on the splash screen. So we register AuthCubit as a lazy singleton, and only create its instance after college is set, which shows CollegePickScreen → onCollegePicked() → initCollegeDependencies.

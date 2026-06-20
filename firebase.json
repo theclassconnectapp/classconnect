@@ -16,21 +16,12 @@
           "fileOutput": "ios/Runner/GoogleService-Info.plist"
         }
       },
-      "macos": {
-        "default": {
-          "projectId": "the-classconnect",
-          "appId": "1:703382214228:ios:6694ea2bcd66b11802bfc1",
-          "uploadDebugSymbols": false,
-          "fileOutput": "macos/Runner/GoogleService-Info.plist"
-        }
-      },
       "dart": {
         "lib/firebase_options.dart": {
           "projectId": "the-classconnect",
           "configurations": {
             "android": "1:703382214228:android:e1b82d9ec85910f102bfc1",
             "ios": "1:703382214228:ios:6694ea2bcd66b11802bfc1",
-            "macos": "1:703382214228:ios:6694ea2bcd66b11802bfc1",
             "web": "1:703382214228:web:e0bdd5deed4cb74402bfc1",
             "windows": "1:703382214228:web:952de7bd925e16a002bfc1"
           }
@@ -40,5 +31,26 @@
   },
   "firestore": {
     "rules": "firestore.rules"
-  }
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run build",
+        "npm --prefix \"$RESOURCE_DIR\" run lint"
+      ]
+    }
+  ]
 }
