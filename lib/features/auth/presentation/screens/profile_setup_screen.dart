@@ -155,7 +155,9 @@ class _ProfileSetupContentState extends State<_ProfileSetupContent> {
                 UserScope(
                   collegeId: _collegeId,
                   departmentId: _selectedDepartment!.id.toString(),
-                  batchId: _selectedBatch?.id.toString(),
+                  batchId: widget.role == UserRole.hod
+                      ? null
+                      : _selectedBatch?.id.toString(),
                   role: widget.role,
                 ),
               ],

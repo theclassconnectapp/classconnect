@@ -153,27 +153,47 @@ class GroupRepositoryImpl implements GroupRepository {
   @override
   Future<void> syncMembership(AppUser user) async {
     if (user.dept == null || user.batch == null) return;
-    final String currentSem =
-        SemesterService.currentSemesterLabel(user.batch!) ?? '';
-    final String groupId = generalGroupId(
-      dept: user.dept!,
-      batch: user.batch!,
-      semester: currentSem,
-    );
-    if (user.role == UserRole.advisor) {
-      await ensureGeneralGroupExists(
+
+    String? groupId;
+
+    if (user.batchId != null && user.batchId!.isNotEmpty) {
+      final QuerySnapshot<Map<String, dynamic>> matches = await _groups
+          .where('batchId', isEqualTo: user.batchId)
+          .where('isGeneral', isEqualTo: true)
+          .limit(1)
+          .get();
+      if (matches.docs.isNotEmpty) {
+        groupId = matches.docs.first.id;
+      }
+    }
+
+    if (groupId == null) {
+      final String currentSem =
+          SemesterService.currentSemesterLabel(user.batch!) ?? '';
+      final String legacyId = generalGroupId(
         dept: user.dept!,
         batch: user.batch!,
         semester: currentSem,
-        advisorUid: user.uid,
-        advisorName: user.name,
       );
-    } else {
-      final DocumentSnapshot<Map<String, dynamic>> groupSnap = await _groupRef(
-        groupId,
-      ).get();
-      if (!groupSnap.exists) return;
+      if (user.role == UserRole.advisor) {
+        await ensureGeneralGroupExists(
+          dept: user.dept!,
+          batch: user.batch!,
+          semester: currentSem,
+          advisorUid: user.uid,
+          advisorName: user.name,
+        );
+        groupId = legacyId;
+      } else {
+        final DocumentSnapshot<Map<String, dynamic>> groupSnap =
+            await _groupRef(legacyId).get();
+        if (groupSnap.exists) {
+          groupId = legacyId;
+        }
+      }
     }
+
+    if (groupId == null) return;
     await addMember(groupId: groupId, user: user);
   }
 

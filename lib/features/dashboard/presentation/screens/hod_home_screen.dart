@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../core/di/injection_container.dart';
+import '../../../ai/domain/repositories/ai_repository.dart';
+import '../../../ai/presentation/screens/ai_chat_screen.dart';
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../groups/domain/repositories/group_repository.dart';
 import '../../../groups/presentation/screens/semester_screen.dart';
@@ -165,44 +167,11 @@ class _HodHomeScreenState extends State<HodHomeScreen> {
     );
   }
 
-  Widget _comingSoonTab() {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.chat_bubble_outline,
-            size: 48,
-            color: colorScheme.onSurface.withValues(alpha: 0.54),
-          ),
-          SizedBox(height: 16),
-          Text(
-            'Private chat',
-            style: TextStyle(
-              color: colorScheme.onSurface,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Coming soon',
-            style: TextStyle(
-              color: colorScheme.onSurface.withValues(alpha: 0.60),
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final List<Widget> tabs = [
-      _comingSoonTab(),
+      AiChatScreen(aiRepository: sl<AiRepository>()),
       _homeTab(),
       ProfileScreen(user: widget.user),
     ];

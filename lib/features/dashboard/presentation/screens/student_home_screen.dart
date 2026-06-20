@@ -250,43 +250,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     );
   }
 
-  Widget _comingSoonTab() {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.chat_bubble_outline,
-            size: 48,
-            color: colorScheme.onSurface.withValues(alpha: 0.54),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Private chat',
-            style: TextStyle(
-              color: colorScheme.onSurface,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Coming soon',
-            style: TextStyle(
-              color: colorScheme.onSurface.withValues(alpha: 0.60),
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final List<Widget> tabs = [
-      _comingSoonTab(),
+      AiChatScreen(aiRepository: sl<AiRepository>()),
       _homeTab(),
       ProfileScreen(user: widget.user),
     ];
