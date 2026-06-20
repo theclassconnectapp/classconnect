@@ -93,7 +93,7 @@ class _HodHomeScreenState extends State<HodHomeScreen> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 32),
                       child: Text(
-                        'Error: \${snapshot.error}',
+                        'Error: ${snapshot.error}',
                         style: TextStyle(color: colorScheme.onSurface),
                       ),
                     ),
@@ -107,7 +107,7 @@ class _HodHomeScreenState extends State<HodHomeScreen> {
                   final dept = (data['dept'] ?? '') as String;
                   final batch = (data['batch'] ?? '') as String;
                   if (dept.isEmpty || batch.isEmpty) continue;
-                  final key = '\$dept|\$batch';
+                  final key = '$dept|$batch';
                   folders[key] = {'dept': dept, 'batch': batch};
                 }
 
