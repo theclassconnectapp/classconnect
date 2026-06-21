@@ -108,7 +108,7 @@ class _SubTeacherHomeScreenState extends State<SubTeacherHomeScreen> {
                   final dept = (data['dept'] ?? '') as String;
                   final batch = (data['batch'] ?? '') as String;
                   if (dept.isEmpty || batch.isEmpty) continue;
-                  final key = '\$dept|\$batch';
+                  final key = '$dept|$batch';
                   folders[key] = {'dept': dept, 'batch': batch};
                 }
 
