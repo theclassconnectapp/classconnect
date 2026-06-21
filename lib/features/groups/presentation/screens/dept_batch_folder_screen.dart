@@ -8,6 +8,7 @@ import '../../../auth/domain/entities/user_role.dart';
 import '../../../college/domain/repositories/college_repository.dart'
     as college_domain;
 import '../../data/models/group_models.dart';
+import '../../data/repositories/group_repository_impl.dart';
 import '../../domain/repositories/group_repository.dart';
 import '../../data/repositories/semester_repository_impl.dart';
 import '../../../ai/presentation/screens/ai_assistant_screen.dart';
@@ -93,6 +94,80 @@ class _DeptBatchFolderScreenState extends State<DeptBatchFolderScreen> {
     );
   }
 
+  Future<void> _confirmDeleteGroup(
+    BuildContext context,
+    String groupId,
+    String groupName,
+  ) async {
+    final TextEditingController confirmController = TextEditingController();
+    try {
+      final bool? confirmed = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext dialogContext) => StatefulBuilder(
+          builder: (BuildContext dialogContext, StateSetter setDialogState) {
+            final bool isValid = confirmController.text.trim() == 'DELETE';
+            return AlertDialog(
+              title: const Text('Delete Group'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'This will permanently delete "$groupName". This cannot be undone.',
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Type DELETE to confirm:'),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: confirmController,
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'DELETE',
+                    ),
+                    onChanged: (_) => setDialogState(() {}),
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: isValid
+                      ? () => Navigator.of(dialogContext).pop(true)
+                      : null,
+                  child: const Text(
+                    'Delete',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+
+      if (confirmed == true && context.mounted) {
+        try {
+          await widget.groupRepository.deleteGroup(groupId: groupId);
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Group deleted.')));
+        } catch (e) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Failed to delete group: $e')));
+        }
+      }
+    } finally {
+      confirmController.dispose();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final String resolvedSem =
@@ -170,6 +245,10 @@ class _DeptBatchFolderScreenState extends State<DeptBatchFolderScreen> {
                   final DateTime? previewTime =
                       (data['lastMessageTime'] as Timestamp?)?.toDate();
                   final bool isSubject = group.type != GroupType.general;
+                  final bool showDelete = canDeleteGroup(
+                    groupData: data,
+                    currentUser: widget.user,
+                  );
 
                   return Card(
                     child: ListTile(
@@ -214,6 +293,13 @@ class _DeptBatchFolderScreenState extends State<DeptBatchFolderScreen> {
                           ),
                         );
                       },
+                      onLongPress: showDelete
+                          ? () => _confirmDeleteGroup(
+                              context,
+                              doc.id,
+                              group.name.isEmpty ? 'this group' : group.name,
+                            )
+                          : null,
                     ),
                   );
                 },

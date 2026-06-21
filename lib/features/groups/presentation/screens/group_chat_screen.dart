@@ -16,6 +16,7 @@ import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/domain/entities/user_role.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../data/models/group_models.dart';
+import '../../data/repositories/group_repository_impl.dart';
 import '../../domain/repositories/group_repository.dart';
 import 'package:classconnect/core/media/media_viewer_screens.dart';
 import 'group_info_screen.dart';
@@ -102,8 +103,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   bool _canSend(Map<String, dynamic> group) {
     if (_isMuted(group)) return false;
-    final bool onlyAdmins =
-        group['onlyAdminsCanMessage'] as bool? ?? false;
+    final bool onlyAdmins = group['onlyAdminsCanMessage'] as bool? ?? false;
     if (onlyAdmins && !_isAdmin(group)) return false;
     return true;
   }
@@ -120,20 +120,23 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     final String lowerUrl = url.toLowerCase();
     final String lowerType = (fileType ?? '').toLowerCase();
 
-    final bool isImage = type == MessageType.image ||
+    final bool isImage =
+        type == MessageType.image ||
         lowerType.contains('image') ||
         lowerUrl.contains('.png') ||
         lowerUrl.contains('.jpg') ||
         lowerUrl.contains('.jpeg') ||
         lowerUrl.contains('.webp');
 
-    final bool isVideo = type == MessageType.video ||
+    final bool isVideo =
+        type == MessageType.video ||
         lowerType.contains('video') ||
         lowerUrl.contains('.mp4') ||
         lowerUrl.contains('.mov') ||
         lowerUrl.contains('.m4v');
 
-    final bool isPdf = type == MessageType.pdf ||
+    final bool isPdf =
+        type == MessageType.pdf ||
         lowerType.contains('pdf') ||
         lowerUrl.contains('.pdf') ||
         lowerUrl.contains('application%2fpdf');
@@ -173,9 +176,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   Future<void> _downloadAndOpen(String url, {String? fileName}) async {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Opening file...')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Opening file...')));
     try {
       final http.Response response = await http.get(Uri.parse(url));
       final Directory tempDir = await getTemporaryDirectory();
@@ -187,9 +190,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       await OpenFilex.open(file.path);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to open file: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to open file: $e')));
     }
   }
 
@@ -198,9 +201,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     if (uri == null) return;
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication) &&
         mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open link')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Could not open link')));
     }
   }
 
@@ -260,7 +263,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     final String lower = file.name.toLowerCase();
 
     final bool isPdf = lower.endsWith('.pdf');
-    final bool isVideo = lower.endsWith('.mp4') ||
+    final bool isVideo =
+        lower.endsWith('.mp4') ||
         lower.endsWith('.mov') ||
         lower.endsWith('.m4v');
 
@@ -271,10 +275,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     final String mimeType = isPdf
         ? 'application/pdf'
         : isVideo
-            ? (lower.endsWith('.mov') ? 'video/quicktime' : 'video/mp4')
-            : (lower.endsWith('.png')
-                ? 'image/png'
-                : (lower.endsWith('.webp') ? 'image/webp' : 'image/jpeg'));
+        ? (lower.endsWith('.mov') ? 'video/quicktime' : 'video/mp4')
+        : (lower.endsWith('.png')
+              ? 'image/png'
+              : (lower.endsWith('.webp') ? 'image/webp' : 'image/jpeg'));
 
     final Map<String, dynamic>? reply = _replyTo == null
         ? null
@@ -300,9 +304,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       setState(() => _replyTo = null);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send file: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to send file: $e')));
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }
@@ -311,8 +315,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   Future<void> _copy(ChatMessage message) async {
     final String value =
         message.type == MessageType.text || message.type == MessageType.link
-            ? message.content
-            : (message.fileUrl ?? message.content);
+        ? message.content
+        : (message.fileUrl ?? message.content);
     await Clipboard.setData(ClipboardData(text: value));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -321,6 +325,80 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         duration: Duration(seconds: 2),
       ),
     );
+  }
+
+  Future<void> _confirmDeleteGroup(
+    BuildContext context,
+    String groupId,
+    String groupName,
+  ) async {
+    final TextEditingController confirmController = TextEditingController();
+    try {
+      final bool? confirmed = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext dialogContext) => StatefulBuilder(
+          builder: (BuildContext dialogContext, StateSetter setDialogState) {
+            final bool isValid = confirmController.text.trim() == 'DELETE';
+            return AlertDialog(
+              title: const Text('Delete Group'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'This will permanently delete "$groupName". This cannot be undone.',
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Type DELETE to confirm:'),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: confirmController,
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'DELETE',
+                    ),
+                    onChanged: (_) => setDialogState(() {}),
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: isValid
+                      ? () => Navigator.of(dialogContext).pop(true)
+                      : null,
+                  child: const Text(
+                    'Delete',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+
+      if (confirmed == true && context.mounted) {
+        try {
+          await widget.groupRepository.deleteGroup(groupId: groupId);
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to delete group: $e')),
+            );
+          }
+        }
+      }
+    } finally {
+      confirmController.dispose();
+    }
   }
 
   Future<void> _forward(ChatMessage message) async {
@@ -334,15 +412,18 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         child: ListView(
           shrinkWrap: true,
           children: groups
-              .where((QueryDocumentSnapshot<Map<String, dynamic>> d) =>
-                  d.id != widget.groupId)
+              .where(
+                (QueryDocumentSnapshot<Map<String, dynamic>> d) =>
+                    d.id != widget.groupId,
+              )
               .map((QueryDocumentSnapshot<Map<String, dynamic>> d) {
-            final String name = (d.data()['name'] as String?) ?? d.id;
-            return ListTile(
-              title: Text(name),
-              onTap: () => Navigator.of(context).pop(d.id),
-            );
-          }).toList(),
+                final String name = (d.data()['name'] as String?) ?? d.id;
+                return ListTile(
+                  title: Text(name),
+                  onTap: () => Navigator.of(context).pop(d.id),
+                );
+              })
+              .toList(),
         ),
       ),
     );
@@ -355,8 +436,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
-Future<void> _messageActions(
-      ChatMessage message, Map<String, dynamic> group) async {
+  Future<void> _messageActions(
+    ChatMessage message,
+    Map<String, dynamic> group,
+  ) async {
+    if (message.isDeleted) return;
     if (widget.readOnly) return;
     final bool canDelete =
         _isSuperAdmin(group) || message.uid == widget.user.uid;
@@ -386,7 +470,10 @@ Future<void> _messageActions(
             ),
             if (message.status == 'failed')
               ListTile(
-                leading: const Icon(Icons.refresh_rounded, color: Colors.redAccent),
+                leading: const Icon(
+                  Icons.refresh_rounded,
+                  color: Colors.redAccent,
+                ),
                 title: const Text('Retry send'),
                 onTap: () => Navigator.of(context).pop('retry'),
               ),
@@ -451,13 +538,15 @@ Future<void> _messageActions(
           messageId: message.id,
         );
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Message pinned.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Message pinned.')));
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to pin message. Please try again.')),
+          const SnackBar(
+            content: Text('Failed to pin message. Please try again.'),
+          ),
         );
       }
       return;
@@ -470,13 +559,15 @@ Future<void> _messageActions(
           deletedByUid: widget.user.uid,
         );
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Message deleted.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Message deleted.')));
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to delete message. Please try again.')),
+          const SnackBar(
+            content: Text('Failed to delete message. Please try again.'),
+          ),
         );
       }
     }
@@ -575,13 +666,16 @@ Future<void> _messageActions(
         return Container(
           width: 220,
           height: 160,
-            decoration: BoxDecoration(
+          decoration: BoxDecoration(
             color: colorScheme.onSurface.withAlpha(222),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Center(
-            child: Icon(Icons.play_circle_fill,
-                color: colorScheme.onSurface, size: 48),
+            child: Icon(
+              Icons.play_circle_fill,
+              color: colorScheme.onSurface,
+              size: 48,
+            ),
           ),
         );
       case MessageType.pdf:
@@ -612,13 +706,16 @@ Future<void> _messageActions(
         child: Container(
           margin: const EdgeInsets.symmetric(vertical: 6),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
+          decoration: BoxDecoration(
             color: colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Text(
             m.content,
-            style: TextStyle(fontSize: 12, color: colorScheme.onSurface.withAlpha(138)),
+            style: TextStyle(
+              fontSize: 12,
+              color: colorScheme.onSurface.withAlpha(138),
+            ),
           ),
         ),
       );
@@ -627,19 +724,25 @@ Future<void> _messageActions(
     final bool highlighted = _highlightMessageId == m.id;
     final String query = _searchController.text.trim();
     final bool queryHit =
-        query.isNotEmpty && m.content.toLowerCase().contains(query.toLowerCase());
+        query.isNotEmpty &&
+        m.content.toLowerCase().contains(query.toLowerCase());
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    final Color base = mine ? colorScheme.primaryContainer : colorScheme.surfaceContainerHighest;
+    final Color base = m.isDeleted
+        ? colorScheme.surfaceContainerHigh.withAlpha(120)
+        : mine
+        ? colorScheme.primaryContainer
+        : colorScheme.surfaceContainerHighest;
     final Color color = highlighted ? colorScheme.secondaryContainer : base;
     final Color messageTextColor = highlighted
         ? colorScheme.onSecondaryContainer
         : mine
-            ? colorScheme.onPrimaryContainer
-            : colorScheme.onSurface;
+        ? colorScheme.onPrimaryContainer
+        : colorScheme.onSurface;
     return Dismissible(
       key: ValueKey<String>('dismiss_${m.id}'),
       direction: DismissDirection.startToEnd,
       confirmDismiss: (_) async {
+        if (m.isDeleted) return false;
         setState(() => _replyTo = m);
         return false;
       },
@@ -652,18 +755,31 @@ Future<void> _messageActions(
         alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
           key: _messageKeys.putIfAbsent(m.id, () => GlobalKey()),
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          padding: const EdgeInsets.all(10),
+          margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           constraints: const BoxConstraints(maxWidth: 320),
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.only(
+              topLeft: const Radius.circular(16),
+              topRight: const Radius.circular(16),
+              bottomLeft: Radius.circular(mine ? 16 : 4),
+              bottomRight: Radius.circular(mine ? 4 : 16),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withAlpha(15),
+                blurRadius: 3,
+                offset: const Offset(0, 1),
+              ),
+            ],
           ),
           child: InkWell(
             onLongPress: () => _messageActions(m, group),
             child: Column(
-              crossAxisAlignment:
-                  mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: mine
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
               children: <Widget>[
                 if (m.isForwarded)
                   Row(
@@ -671,7 +787,10 @@ Future<void> _messageActions(
                     children: <Widget>[
                       Icon(Icons.forward, size: 12, color: messageTextColor),
                       const SizedBox(width: 4),
-                      Text('Forwarded', style: TextStyle(fontSize: 11, color: messageTextColor)),
+                      Text(
+                        'Forwarded',
+                        style: TextStyle(fontSize: 11, color: messageTextColor),
+                      ),
                     ],
                   ),
                 if (!mine)
@@ -679,40 +798,43 @@ Future<void> _messageActions(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       UserAvatar(
-                          name: m.senderName,
-                          photoUrl: m.senderPhoto,
-                          radius: 10),
+                        name: m.senderName,
+                        photoUrl: m.senderPhoto,
+                        radius: 10,
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         m.senderName,
                         style: TextStyle(
-                            color: messageTextColor,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12),
+                          color: messageTextColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
                 if (m.replyTo != null)
                   InkWell(
                     onTap: () {
-                      final String? id =
-                          m.replyTo!['messageId'] as String?;
+                      final String? id = m.replyTo!['messageId'] as String?;
                       if (id != null) _scrollToMessage(id);
                     },
                     child: Container(
                       margin: const EdgeInsets.only(top: 4, bottom: 4),
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                          color: colorScheme.onSurface.withAlpha(31),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                        color: colorScheme.onSurface.withAlpha(31),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
                             (m.replyTo!['senderName'] as String?) ?? '',
                             style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 12),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
                           ),
                           Text(
                             (m.replyTo!['content'] as String?) ?? '',
@@ -724,21 +846,28 @@ Future<void> _messageActions(
                     ),
                   ),
                 if (m.isDeleted)
-                          Text(
-                            'This message was deleted',
-                            style: TextStyle(
-                                fontStyle: FontStyle.italic, color: colorScheme.onSurface.withAlpha(138)),
-                          )
+                  Text(
+                    'This message was deleted',
+                    style: TextStyle(
+                      fontStyle: FontStyle.italic,
+                      color: colorScheme.onSurface.withAlpha(138),
+                    ),
+                  )
                 else if (m.type == MessageType.text ||
                     m.type == MessageType.link)
                   GestureDetector(
-                    onTap:
-                        _isUrl(m.content) ? () => _openLinkInText(m.content) : null,
+                    onTap: _isUrl(m.content)
+                        ? () => _openLinkInText(m.content)
+                        : null,
                     child: Text(
                       m.content,
                       style: TextStyle(
-                        fontWeight: queryHit ? FontWeight.bold : FontWeight.normal,
-                        color: _isUrl(m.content) ? colorScheme.primary : messageTextColor,
+                        fontWeight: queryHit
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        color: _isUrl(m.content)
+                            ? colorScheme.primary
+                            : messageTextColor,
                         decoration: _isUrl(m.content)
                             ? TextDecoration.underline
                             : null,
@@ -750,24 +879,25 @@ Future<void> _messageActions(
                     onTap: m.fileUrl == null
                         ? null
                         : () => _openMedia(
-                              m.fileUrl!,
-                              fileType: m.fileType,
-                              fileName: m.fileName,
-                              type: m.type,
-                            ),
+                            m.fileUrl!,
+                            fileType: m.fileType,
+                            fileName: m.fileName,
+                            type: m.type,
+                          ),
                     child: _attachmentPreview(m),
                   ),
-                if (m.reactions.isNotEmpty)
-                          Padding(
+                if (!m.isDeleted && m.reactions.isNotEmpty)
+                  Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Wrap(
                       spacing: 4,
-                      children: _reactionCounts(m.reactions)
-                          .entries
-                          .map((MapEntry<String, int> e) => Chip(
-                                visualDensity: VisualDensity.compact,
-                                label: Text('${e.key} ${e.value}'),
-                              ))
+                      children: _reactionCounts(m.reactions).entries
+                          .map(
+                            (MapEntry<String, int> e) => Chip(
+                              visualDensity: VisualDensity.compact,
+                              label: Text('${e.key} ${e.value}'),
+                            ),
+                          )
                           .toList(),
                     ),
                   ),
@@ -815,8 +945,8 @@ Future<void> _messageActions(
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest,
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Text(
@@ -828,7 +958,9 @@ Future<void> _messageActions(
   }
 
   List<Widget> _messageWidgets(
-      List<ChatMessage> messages, Map<String, dynamic> group) {
+    List<ChatMessage> messages,
+    Map<String, dynamic> group,
+  ) {
     DateTime? lastDay;
     final List<Widget> out = <Widget>[];
     for (final ChatMessage m in messages) {
@@ -852,463 +984,632 @@ Future<void> _messageActions(
 
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
       stream: widget.groupRepository.streamGroupDoc(widget.groupId),
-      builder: (BuildContext context,
-          AsyncSnapshot<DocumentSnapshot<Map<String, dynamic>>> groupSnapshot) {
-        final Map<String, dynamic> group =
-            groupSnapshot.data?.data() ?? widget.groupData;
-        final String title = (group['name'] as String?) ?? 'Group';
-        final String? photoUrl = group['photoUrl'] as String?;
-        final bool canSend = _canSend(group);
-        final bool isAdmin = _isAdmin(group);
-        final String? pinnedMessageId = group['pinnedMessageId'] as String?;
-        final bool showJoinGate = _isSubjectGroup(group) && !_isMember(group);
+      builder:
+          (
+            BuildContext context,
+            AsyncSnapshot<DocumentSnapshot<Map<String, dynamic>>> groupSnapshot,
+          ) {
+            final Map<String, dynamic> group =
+                groupSnapshot.data?.data() ?? widget.groupData;
+            final String title = (group['name'] as String?) ?? 'Group';
+            final String? photoUrl = group['photoUrl'] as String?;
+            final bool canSend = _canSend(group);
+            final bool isAdmin = _isAdmin(group);
+            final String? pinnedMessageId = group['pinnedMessageId'] as String?;
+            final bool showJoinGate =
+                _isSubjectGroup(group) && !_isMember(group);
 
-        return DefaultTabController(
-          length: 2,
-          child: Scaffold(
-            appBar: AppBar(
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              foregroundColor: Theme.of(context).colorScheme.onSurface,
-              iconTheme: IconThemeData(
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              title: _searchMode
-                  ? TextField(
-                      controller: _searchController,
-                      autofocus: true,
-                      decoration: const InputDecoration(
-                        hintText: 'Search messages',
-                        border: InputBorder.none,
-                      ),
-                      onChanged: (_) => setState(() {}),
-                    )
-                  : Row(
-                     children: <Widget>[
-                        CircleAvatar(
-                           radius: 14,
-                           backgroundColor: colorScheme.primary,
-                           backgroundImage: photoUrl != null && photoUrl.isNotEmpty
-                               ? NetworkImage(photoUrl)
-                               : null,
-                            child: photoUrl == null || photoUrl.isEmpty
-                               ? Text(
-                                   title.isEmpty ? '?' : title[0].toUpperCase(),
-                                   style: TextStyle(
-                                      color: colorScheme.onPrimary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              )
-            : null,
-      ),
-      const SizedBox(width: 8),
-      Expanded(
-        child: Text(
-          title,
-          style: TextStyle(
-            color: colorScheme.onSurface,
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
-        ),
-      ),
-                 ],
-              ),
-              bottom: TabBar(
-                labelColor: Theme.of(context).colorScheme.onSurface,
-                unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.60),
-                indicatorColor: Theme.of(context).colorScheme.primary,
-                dividerColor: Theme.of(context).colorScheme.outlineVariant,
-                tabs: const <Tab>[Tab(text: 'Chat'), Tab(text: 'Files')],
-              ),
-              actions: <Widget>[
-                if (_searchMode)
-                  IconButton(
-                    onPressed: () => _moveSearch(-1),
-                    icon: const Icon(Icons.keyboard_arrow_up),
+            return DefaultTabController(
+              length: 2,
+              child: Scaffold(
+                appBar: AppBar(
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  foregroundColor: Theme.of(context).colorScheme.onSurface,
+                  iconTheme: IconThemeData(
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
-                if (_searchMode)
-                  IconButton(
-                    onPressed: () => _moveSearch(1),
-                    icon: const Icon(Icons.keyboard_arrow_down),
-                  ),
-                if (_searchMode)
-                  Center(
-                    child: Text(
-                      _matchIds.isEmpty
-                          ? '0'
-                          : '${_searchIndex + 1} of ${_matchIds.length}',
-                    ),
-                  ),
-                IconButton(
-                  icon: Icon(_searchMode ? Icons.close : Icons.search),
-                  onPressed: () {
-                    setState(() {
-                      _searchMode = !_searchMode;
-                      if (!_searchMode) {
-                        _searchController.clear();
-                        _matchIds = <String>[];
-                        _searchIndex = -1;
-                      }
-                    });
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.info_outline),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => GroupInfoScreen(
-                          groupId: widget.groupId,
-                          groupData: group,
-                          currentUser: widget.user,
-                          groupRepository: widget.groupRepository,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                PopupMenuButton<String>(
-                  onSelected: (String action) {
-                    if (action == 'members') {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => MembersScreen(
-                            groupId: widget.groupId,
-                            groupTitle: title,
-                            groupRepository: widget.groupRepository,
-                            currentUser: widget.user,
-                            groupData: group,
+                  title: _searchMode
+                      ? TextField(
+                          controller: _searchController,
+                          autofocus: true,
+                          decoration: const InputDecoration(
+                            hintText: 'Search messages',
+                            border: InputBorder.none,
                           ),
-                        ),
-                      );
-                    }
-                  },
-                  itemBuilder: (_) => const <PopupMenuEntry<String>>[
-                    PopupMenuItem<String>(
-                        value: 'members', child: Text('Members')),
-                  ],
-                ),
-              ],
-            ),
-            body: Stack(
-              children: <Widget>[
-                AbsorbPointer(
-                  absorbing: showJoinGate,
-                  child: ImageFiltered(
-                    imageFilter: ui.ImageFilter.blur(
-                      sigmaX: showJoinGate ? 6 : 0,
-                      sigmaY: showJoinGate ? 6 : 0,
-                    ),
-                    child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                      stream: widget.groupRepository.streamMessages(widget.groupId),
-                      builder: (BuildContext context,
-                          AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snapshot) {
-                final List<ChatMessage> messages = (snapshot.data?.docs ??
-                        <QueryDocumentSnapshot<Map<String, dynamic>>>[])
-                    .map(ChatMessage.fromDoc)
-                    .toList();
-                if (_searchMode) {
-                    _runSearch(messages);
-                  }
-                  _scrollToBottom();
-
-                ChatMessage? pinned;
-                if (pinnedMessageId != null) {
-                  for (final ChatMessage m in messages) {
-                    if (m.id == pinnedMessageId) {
-                      pinned = m;
-                      break;
-                    }
-                  }
-                }
-
-                return TabBarView(
-                  children: <Widget>[
-                    Column(
-                      children: <Widget>[
-                        if (pinned != null)
-                          Material(
-                              color: colorScheme.secondaryContainer.withAlpha(51),
-                            child: ListTile(
-                              dense: true,
-                              title: Text(
-                                'Pinned • ${pinned.senderName}: ${pinned.content.length > 40 ? '${pinned.content.substring(0, 40)}...' : pinned.content}',
-                              ),
-                              onTap: () => _scrollToMessage(pinned!.id),
-                              trailing: isAdmin
-                                  ? IconButton(
-                                      icon: const Icon(Icons.close),
-                                      onPressed: () =>
-                                          widget.groupRepository.pinMessage(
-                                        groupId: widget.groupId,
-                                        messageId: null,
+                          onChanged: (_) => setState(() {}),
+                        )
+                      : Row(
+                          children: <Widget>[
+                            CircleAvatar(
+                              radius: 14,
+                              backgroundColor: colorScheme.primary,
+                              backgroundImage:
+                                  photoUrl != null && photoUrl.isNotEmpty
+                                  ? NetworkImage(photoUrl)
+                                  : null,
+                              child: photoUrl == null || photoUrl.isEmpty
+                                  ? Text(
+                                      title.isEmpty
+                                          ? '?'
+                                          : title[0].toUpperCase(),
+                                      style: TextStyle(
+                                        color: colorScheme.onPrimary,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     )
                                   : null,
                             ),
-                          ),
-                        if (!canSend)
-                            Container(
-                            width: double.infinity,
-                            color: colorScheme.primary.withAlpha(51),
-                            padding: const EdgeInsets.all(8),
-                            child: Text(
-                              _isMuted(group)
-                                  ? 'You are muted'
-                                  : 'Only admins can send messages',
-                            ),
-                          ),
-                        Expanded(
-                          child: ListView(
-                            controller: _scrollController,
-                            padding: const EdgeInsets.all(12),
-                            children: _messageWidgets(messages, group),
-                          ),
-                        ),
-                        if (_replyTo != null)
-                          Container(
-                            color: colorScheme.surfaceContainerHighest,
-                            padding: const EdgeInsets.all(8),
-                            child: Row(
-                              children: <Widget>[
-                                Expanded(
-                                  child: Text(
-                                    'Replying to ${_replyTo!.senderName}: ${_replyTo!.content}',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                title,
+                                style: TextStyle(
+                                  color: colorScheme.onSurface,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
                                 ),
-                                IconButton(
-                                  onPressed: () =>
-                                      setState(() => _replyTo = null),
-                                  icon: const Icon(Icons.close),
-                                ),
-                              ],
-                            ),
-                          ),
-                        if (widget.readOnly)
-                          Container(
-                            width: double.infinity,
-                            color: colorScheme.surfaceContainerHighest,
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.archive_outlined, size: 16,
-                                    color: colorScheme.onSurface.withAlpha(153)),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Archived semester — read only',
-                                  style: TextStyle(
-                                      color: colorScheme.onSurface.withAlpha(153), fontSize: 13),
-                                ),
-                              ],
-                            ),
-                          )
-                        else
-                          SafeArea(
-                            top: false,
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-                              child: Row(
-                                children: <Widget>[
-                                  IconButton(
-                                    onPressed: _isUploading
-                                        ? null
-                                        : (canSend &&
-                                                widget.user.role !=
-                                                    UserRole.student
-                                            ? () => _attachFile(group)
-                                            : null),
-                                    icon: _isUploading
-                                        ? const SizedBox(
-                                            width: 20,
-                                            height: 20,
-                                            child: CircularProgressIndicator(
-                                                strokeWidth: 2),
-                                          )
-                                        : const Icon(Icons.attach_file),
-                                  ),
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _textController,
-                                      enabled: canSend,
-                                      decoration: const InputDecoration(
-                                        hintText: 'Type a message',
-                                        border: OutlineInputBorder(),
-                                      ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    onPressed: canSend
-                                        ? () => _sendText(group)
-                                        : null,
-                                    icon: const Icon(Icons.send),
-                                  ),
-                                ],
                               ),
+                            ),
+                          ],
+                        ),
+                  bottom: TabBar(
+                    labelColor: Theme.of(context).colorScheme.onSurface,
+                    unselectedLabelColor: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.60),
+                    indicatorColor: Theme.of(context).colorScheme.primary,
+                    dividerColor: Theme.of(context).colorScheme.outlineVariant,
+                    tabs: const <Tab>[
+                      Tab(text: 'Chat'),
+                      Tab(text: 'Files'),
+                    ],
+                  ),
+                  actions: <Widget>[
+                    if (_searchMode)
+                      IconButton(
+                        onPressed: () => _moveSearch(-1),
+                        icon: const Icon(Icons.keyboard_arrow_up),
+                      ),
+                    if (_searchMode)
+                      IconButton(
+                        onPressed: () => _moveSearch(1),
+                        icon: const Icon(Icons.keyboard_arrow_down),
+                      ),
+                    if (_searchMode)
+                      Center(
+                        child: Text(
+                          _matchIds.isEmpty
+                              ? '0'
+                              : '${_searchIndex + 1} of ${_matchIds.length}',
+                        ),
+                      ),
+                    IconButton(
+                      icon: Icon(_searchMode ? Icons.close : Icons.search),
+                      onPressed: () {
+                        setState(() {
+                          _searchMode = !_searchMode;
+                          if (!_searchMode) {
+                            _searchController.clear();
+                            _matchIds = <String>[];
+                            _searchIndex = -1;
+                          }
+                        });
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.info_outline),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => GroupInfoScreen(
+                              groupId: widget.groupId,
+                              groupData: group,
+                              currentUser: widget.user,
+                              groupRepository: widget.groupRepository,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    PopupMenuButton<String>(
+                      onSelected: (String action) {
+                        if (action == 'members') {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => MembersScreen(
+                                groupId: widget.groupId,
+                                groupTitle: title,
+                                groupRepository: widget.groupRepository,
+                                currentUser: widget.user,
+                                groupData: group,
+                              ),
+                            ),
+                          );
+                        } else if (action == 'delete') {
+                          _confirmDeleteGroup(
+                            context,
+                            widget.groupId,
+                            group['name'] as String? ?? 'this group',
+                          );
+                        }
+                      },
+                      itemBuilder: (_) => <PopupMenuEntry<String>>[
+                        const PopupMenuItem<String>(
+                          value: 'members',
+                          child: Text('Members'),
+                        ),
+                        if (canDeleteGroup(
+                          groupData: group,
+                          currentUser: widget.user,
+                        ))
+                          const PopupMenuItem<String>(
+                            value: 'delete',
+                            child: Text(
+                              'Delete Group',
+                              style: TextStyle(color: Colors.red),
                             ),
                           ),
                       ],
                     ),
-                    StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                      stream:
-                          widget.groupRepository.streamFiles(widget.groupId),
-                      builder: (BuildContext context,
-                          AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
-                              fileSnap) {
-                        final List<QueryDocumentSnapshot<Map<String, dynamic>>>
-                            docs = fileSnap.data?.docs ??
-                                <QueryDocumentSnapshot<
-                                    Map<String, dynamic>>>[];
-                        if (docs.isEmpty) {
-                          return Center(
-                            child: Text(
-                              'No files shared yet.',
-                              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-                            ),
-                          );
-                        }
-                        return GridView.builder(
-                          padding: const EdgeInsets.all(12),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 10,
-                            crossAxisSpacing: 10,
-                            childAspectRatio: 1.4,
+                  ],
+                ),
+                body: Stack(
+                  children: <Widget>[
+                    AbsorbPointer(
+                      absorbing: showJoinGate,
+                      child: ImageFiltered(
+                        imageFilter: ui.ImageFilter.blur(
+                          sigmaX: showJoinGate ? 6 : 0,
+                          sigmaY: showJoinGate ? 6 : 0,
+                        ),
+                        child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                          stream: widget.groupRepository.streamMessages(
+                            widget.groupId,
                           ),
-                          itemCount: docs.length,
-                          itemBuilder: (_, int index) {
-                            final Map<String, dynamic> file =
-                                docs[index].data();
-                            final String name =
-                                (file['fileName'] as String?) ?? 'File';
-                            final String fileType =
-                                (file['fileType'] as String?) ?? '';
-                            return Card(
-                              child: InkWell(
-                                onTap: () => _openMedia(
-                                  (file['fileUrl'] as String?) ?? '',
-                                  fileType: fileType,
-                                  fileName: name,
-                                ),
-                                onLongPress: () async {
-                                  final String? action =
-                                      await showModalBottomSheet<String>(
-                                    context: context,
-                                    builder: (_) => SafeArea(
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: <Widget>[
-                                          ListTile(
-                                            title: const Text('Copy'),
-                                            onTap: () => Navigator.of(context)
-                                                .pop('copy'),
+                          builder:
+                              (
+                                BuildContext context,
+                                AsyncSnapshot<
+                                  QuerySnapshot<Map<String, dynamic>>
+                                >
+                                snapshot,
+                              ) {
+                                final List<ChatMessage> messages =
+                                    (snapshot.data?.docs ??
+                                            <
+                                              QueryDocumentSnapshot<
+                                                Map<String, dynamic>
+                                              >
+                                            >[])
+                                        .map(ChatMessage.fromDoc)
+                                        .toList();
+                                if (_searchMode) {
+                                  _runSearch(messages);
+                                }
+                                _scrollToBottom();
+
+                                ChatMessage? pinned;
+                                if (pinnedMessageId != null) {
+                                  for (final ChatMessage m in messages) {
+                                    if (m.id == pinnedMessageId) {
+                                      pinned = m;
+                                      break;
+                                    }
+                                  }
+                                }
+
+                                return TabBarView(
+                                  children: <Widget>[
+                                    Column(
+                                      children: <Widget>[
+                                        if (pinned != null)
+                                          Material(
+                                            color: colorScheme
+                                                .secondaryContainer
+                                                .withAlpha(51),
+                                            child: ListTile(
+                                              dense: true,
+                                              title: Text(
+                                                'Pinned • ${pinned.senderName}: ${pinned.content.length > 40 ? '${pinned.content.substring(0, 40)}...' : pinned.content}',
+                                              ),
+                                              onTap: () =>
+                                                  _scrollToMessage(pinned!.id),
+                                              trailing: isAdmin
+                                                  ? IconButton(
+                                                      icon: const Icon(
+                                                        Icons.close,
+                                                      ),
+                                                      onPressed: () => widget
+                                                          .groupRepository
+                                                          .pinMessage(
+                                                            groupId:
+                                                                widget.groupId,
+                                                            messageId: null,
+                                                          ),
+                                                    )
+                                                  : null,
+                                            ),
                                           ),
-                                        ],
+                                        if (!canSend)
+                                          Container(
+                                            width: double.infinity,
+                                            color: colorScheme.primary
+                                                .withAlpha(51),
+                                            padding: const EdgeInsets.all(8),
+                                            child: Text(
+                                              _isMuted(group)
+                                                  ? 'You are muted'
+                                                  : 'Only admins can send messages',
+                                            ),
+                                          ),
+                                        Expanded(
+                                          child: ListView(
+                                            controller: _scrollController,
+                                            padding: const EdgeInsets.all(12),
+                                            children: _messageWidgets(
+                                              messages,
+                                              group,
+                                            ),
+                                          ),
+                                        ),
+                                        if (_replyTo != null)
+                                          Container(
+                                            color: colorScheme
+                                                .surfaceContainerHighest,
+                                            padding: const EdgeInsets.all(8),
+                                            child: Row(
+                                              children: <Widget>[
+                                                Expanded(
+                                                  child: Text(
+                                                    'Replying to ${_replyTo!.senderName}: ${_replyTo!.content}',
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                                IconButton(
+                                                  onPressed: () => setState(
+                                                    () => _replyTo = null,
+                                                  ),
+                                                  icon: const Icon(Icons.close),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        if (widget.readOnly)
+                                          Container(
+                                            width: double.infinity,
+                                            color: colorScheme
+                                                .surfaceContainerHighest,
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 12,
+                                              horizontal: 16,
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Icon(
+                                                  Icons.archive_outlined,
+                                                  size: 16,
+                                                  color: colorScheme.onSurface
+                                                      .withAlpha(153),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  'Archived semester — read only',
+                                                  style: TextStyle(
+                                                    color: colorScheme.onSurface
+                                                        .withAlpha(153),
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          )
+                                        else
+                                          SafeArea(
+                                            top: false,
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.fromLTRB(
+                                                    8,
+                                                    4,
+                                                    8,
+                                                    8,
+                                                  ),
+                                              child: Row(
+                                                children: <Widget>[
+                                                  IconButton(
+                                                    onPressed: _isUploading
+                                                        ? null
+                                                        : (canSend &&
+                                                                  widget
+                                                                          .user
+                                                                          .role !=
+                                                                      UserRole
+                                                                          .student
+                                                              ? () =>
+                                                                    _attachFile(
+                                                                      group,
+                                                                    )
+                                                              : null),
+                                                    icon: _isUploading
+                                                        ? const SizedBox(
+                                                            width: 20,
+                                                            height: 20,
+                                                            child:
+                                                                CircularProgressIndicator(
+                                                                  strokeWidth:
+                                                                      2,
+                                                                ),
+                                                          )
+                                                        : const Icon(
+                                                            Icons.attach_file,
+                                                          ),
+                                                  ),
+                                                  Expanded(
+                                                    child: TextField(
+                                                      controller:
+                                                          _textController,
+                                                      enabled: canSend,
+                                                      decoration:
+                                                          const InputDecoration(
+                                                            hintText:
+                                                                'Type a message',
+                                                            border:
+                                                                OutlineInputBorder(),
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  IconButton(
+                                                    onPressed: canSend
+                                                        ? () => _sendText(group)
+                                                        : null,
+                                                    icon: const Icon(
+                                                      Icons.send,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    StreamBuilder<
+                                      QuerySnapshot<Map<String, dynamic>>
+                                    >(
+                                      stream: widget.groupRepository
+                                          .streamFiles(widget.groupId),
+                                      builder:
+                                          (
+                                            BuildContext context,
+                                            AsyncSnapshot<
+                                              QuerySnapshot<
+                                                Map<String, dynamic>
+                                              >
+                                            >
+                                            fileSnap,
+                                          ) {
+                                            final List<
+                                              QueryDocumentSnapshot<
+                                                Map<String, dynamic>
+                                              >
+                                            >
+                                            docs =
+                                                fileSnap.data?.docs ??
+                                                <
+                                                  QueryDocumentSnapshot<
+                                                    Map<String, dynamic>
+                                                  >
+                                                >[];
+                                            if (docs.isEmpty) {
+                                              return Center(
+                                                child: Text(
+                                                  'No files shared yet.',
+                                                  style: TextStyle(
+                                                    color: Theme.of(
+                                                      context,
+                                                    ).colorScheme.onSurface,
+                                                  ),
+                                                ),
+                                              );
+                                            }
+                                            return GridView.builder(
+                                              padding: const EdgeInsets.all(12),
+                                              gridDelegate:
+                                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                                    crossAxisCount: 2,
+                                                    mainAxisSpacing: 10,
+                                                    crossAxisSpacing: 10,
+                                                    childAspectRatio: 1.4,
+                                                  ),
+                                              itemCount: docs.length,
+                                              itemBuilder: (_, int index) {
+                                                final Map<String, dynamic>
+                                                file = docs[index].data();
+                                                final String name =
+                                                    (file['fileName']
+                                                        as String?) ??
+                                                    'File';
+                                                final String fileType =
+                                                    (file['fileType']
+                                                        as String?) ??
+                                                    '';
+                                                return Card(
+                                                  child: InkWell(
+                                                    onTap: () => _openMedia(
+                                                      (file['fileUrl']
+                                                              as String?) ??
+                                                          '',
+                                                      fileType: fileType,
+                                                      fileName: name,
+                                                    ),
+                                                    onLongPress: () async {
+                                                      final String?
+                                                      action = await showModalBottomSheet<String>(
+                                                        context: context,
+                                                        builder: (_) => SafeArea(
+                                                          child: Column(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            children: <Widget>[
+                                                              ListTile(
+                                                                title:
+                                                                    const Text(
+                                                                      'Copy',
+                                                                    ),
+                                                                onTap: () =>
+                                                                    Navigator.of(
+                                                                      context,
+                                                                    ).pop(
+                                                                      'copy',
+                                                                    ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      );
+                                                      if (action == 'copy') {
+                                                        await Clipboard.setData(
+                                                          ClipboardData(
+                                                            text:
+                                                                (file['fileUrl']
+                                                                    as String?) ??
+                                                                '',
+                                                          ),
+                                                        );
+                                                        if (!context.mounted) {
+                                                          return;
+                                                        }
+                                                        ScaffoldMessenger.of(
+                                                          context,
+                                                        ).showSnackBar(
+                                                          const SnackBar(
+                                                            content: Text(
+                                                              'Copied to clipboard',
+                                                            ),
+                                                          ),
+                                                        );
+                                                      }
+                                                    },
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                            12,
+                                                          ),
+                                                      child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .center,
+                                                        children: <Widget>[
+                                                          Icon(
+                                                            fileType.contains(
+                                                                  'image',
+                                                                )
+                                                                ? Icons.image
+                                                                : fileType
+                                                                      .contains(
+                                                                        'video',
+                                                                      )
+                                                                ? Icons.videocam
+                                                                : Icons
+                                                                      .picture_as_pdf,
+                                                            size: 28,
+                                                            color:
+                                                                Theme.of(
+                                                                      context,
+                                                                    )
+                                                                    .colorScheme
+                                                                    .onSurface,
+                                                          ),
+                                                          const SizedBox(
+                                                            height: 8,
+                                                          ),
+                                                          Text(
+                                                            name,
+                                                            maxLines: 2,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            style: TextStyle(
+                                                              color:
+                                                                  Theme.of(
+                                                                        context,
+                                                                      )
+                                                                      .colorScheme
+                                                                      .onSurface,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            );
+                                          },
+                                    ),
+                                  ],
+                                );
+                              },
+                        ),
+                      ),
+                    ),
+                    if (showJoinGate)
+                      Positioned.fill(
+                        child: Container(
+                          color: Colors.black.withAlpha(40),
+                          child: Center(
+                            child: Card(
+                              margin: const EdgeInsets.all(32),
+                              child: Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    Icon(
+                                      Icons.group_add_rounded,
+                                      size: 40,
+                                      color: colorScheme.primary,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'Join $title to view messages',
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 16,
                                       ),
                                     ),
-                                  );
-                                  if (action == 'copy') {
-                                    await Clipboard.setData(
-                                      ClipboardData(
-                                        text:
-                                            (file['fileUrl'] as String?) ?? '',
-                                      ),
-                                    );
-                                    if (!context.mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                          content: Text('Copied to clipboard')),
-                                    );
-                                  }
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: <Widget>[
-                                      Icon(
-                                        fileType.contains('image')
-                                            ? Icons.image
-                                            : fileType.contains('video')
-                                                ? Icons.videocam
-                                                : Icons.picture_as_pdf,
-                                        size: 28,
-                                        color: Theme.of(context).colorScheme.onSurface,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        name,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          color: Theme.of(context).colorScheme.onSurface,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                    const SizedBox(height: 16),
+                                    FilledButton.icon(
+                                      icon: const Icon(Icons.login),
+                                      label: const Text('Join Group'),
+                                      onPressed: () async {
+                                        await widget.groupRepository.addMember(
+                                          groupId: widget.groupId,
+                                          user: widget.user,
+                                        );
+                                      },
+                                    ),
+                                  ],
                                 ),
                               ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ],
-                );
-              },
-                    ),
-                  ),
-                ),
-                if (showJoinGate)
-                  Positioned.fill(
-                    child: Container(
-                      color: Colors.black.withAlpha(40),
-                      child: Center(
-                        child: Card(
-                          margin: const EdgeInsets.all(32),
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                Icon(Icons.group_add_rounded,
-                                    size: 40, color: colorScheme.primary),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'Join $title to view messages',
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600, fontSize: 16),
-                                ),
-                                const SizedBox(height: 16),
-                                FilledButton.icon(
-                                  icon: const Icon(Icons.login),
-                                  label: const Text('Join Group'),
-                                  onPressed: () async {
-                                    await widget.groupRepository.addMember(
-                                      groupId: widget.groupId,
-                                      user: widget.user,
-                                    );
-                                  },
-                                ),
-                              ],
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        );
-      },
+                  ],
+                ),
+              ),
+            );
+          },
     );
   }
 }
@@ -1340,10 +1641,7 @@ class _MessageStatusIcon extends StatelessWidget {
           key: const ValueKey('sending'),
           width: 11,
           height: 11,
-          child: CircularProgressIndicator(
-            strokeWidth: 1.5,
-            color: color,
-          ),
+          child: CircularProgressIndicator(strokeWidth: 1.5, color: color),
         );
       case 'failed':
         return Icon(

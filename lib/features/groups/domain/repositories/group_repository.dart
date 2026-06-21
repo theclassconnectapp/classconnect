@@ -7,7 +7,11 @@ import '../../../auth/domain/entities/app_user.dart';
 import '../../data/models/group_models.dart';
 
 abstract class GroupRepository {
-  String generalGroupId({required String dept, required String batch, required String semester});
+  String generalGroupId({
+    required String dept,
+    required String batch,
+    required String semester,
+  });
 
   Future<void> ensureGeneralGroupExists({
     required String dept,
@@ -114,6 +118,8 @@ abstract class GroupRepository {
     required String name,
     required String description,
   });
+
+  Future<void> deleteGroup({required String groupId});
 
   Future<String> uploadGroupPhoto({
     required String groupId,

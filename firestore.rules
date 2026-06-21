@@ -1,7 +1,6 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
     match /colleges/{collegeId} {
       allow read: if request.auth != null;
       allow write: if false;
@@ -11,10 +10,28 @@ service cloud.firestore {
       }
 
       match /groups/{groupId} {
+        // Anyone signed in can read and create groups.
         allow read: if request.auth != null;
         allow create: if request.auth != null;
-        allow update: if request.auth != null;
-        allow delete: if request.auth != null;
+
+        // Updates: allowed for any signed-in user, but core identity
+        // fields cannot be changed via update (only set at creation time).
+        allow update: if request.auth != null
+          && request.resource.data.isGeneral == resource.data.isGeneral
+          && request.resource.data.dept == resource.data.dept
+          && request.resource.data.batch == resource.data.batch
+          && request.resource.data.departmentId == resource.data.departmentId
+          && request.resource.data.batchId == resource.data.batchId;
+
+        // Deletes: NEVER allowed on General groups, regardless of role.
+        // Subject groups can only be deleted by their creator, or by an
+        // HOD/advisor (checked via their own user document's role field).
+        allow delete: if request.auth != null
+          && resource.data.isGeneral != true
+          && (
+            resource.data.createdByUid == request.auth.uid
+            || get(/databases/$(database)/documents/colleges/$(collegeId)/users/$(request.auth.uid)).data.role in ['hod', 'advisor']
+          );
 
         match /members/{memberUid} {
           allow read, write: if request.auth != null;
@@ -29,21 +46,6 @@ service cloud.firestore {
           allow read, write: if request.auth != null;
         }
       }
-    }
-
-    // Legacy UKF flat structure
-    match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
-    }
-    match /groups/{groupId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null;
-      match /members/{memberUid} { allow read, write: if request.auth != null; }
-      match /messages/{messageId} { allow read, write: if request.auth != null; }
-      match /files/{fileId} { allow read, write: if request.auth != null; }
-      match /states/{uid} { allow read, write: if request.auth != null; }
     }
   }
 }

@@ -15,6 +15,21 @@ import '../../domain/repositories/group_repository.dart';
 import '../models/group_models.dart';
 import 'semester_repository_impl.dart';
 
+bool canDeleteGroup({
+  required Map<String, dynamic> groupData,
+  required AppUser currentUser,
+}) {
+  final bool isGeneral = groupData['isGeneral'] == true;
+  if (isGeneral) return false;
+  final String? createdByUid = groupData['createdByUid'] as String?;
+  if (createdByUid != null && createdByUid == currentUser.uid) return true;
+  if (currentUser.role == UserRole.hod ||
+      currentUser.role == UserRole.advisor) {
+    return true;
+  }
+  return false;
+}
+
 class GroupRepositoryImpl implements GroupRepository {
   GroupRepositoryImpl({
     required this.collegeId,
@@ -631,6 +646,13 @@ class GroupRepositoryImpl implements GroupRepository {
       'name': name.trim(),
       'description': description.trim(),
     }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> deleteGroup({required String groupId}) async {
+    // Firestore does not cascade-delete subcollections; members/messages/files/states
+    // can be cleaned up by a background job later if needed.
+    await _groupRef(groupId).delete();
   }
 
   @override
