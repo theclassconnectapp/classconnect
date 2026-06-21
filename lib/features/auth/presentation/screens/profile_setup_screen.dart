@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/animation/motion.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../college/domain/entities/batch.dart';
 import '../../../college/domain/entities/department.dart';
 import '../../../college/domain/entities/user_scope.dart';
 import '../../../college/domain/repositories/college_repository.dart';
 import '../../../college/presentation/cubit/college_cubit.dart';
 import '../../../college/presentation/cubit/college_state.dart';
+import '../../../college/presentation/screens/staff_scope_picker_screen.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/entities/user_role.dart';
 
@@ -36,6 +38,7 @@ class ProfileSetupScreen extends StatelessWidget {
       child: _ProfileSetupContent(
         firebaseUser: firebaseUser,
         role: role,
+        collegeRepository: collegeRepository,
         onSaved: onSaved,
         onBack: onBack,
       ),
@@ -47,12 +50,14 @@ class _ProfileSetupContent extends StatefulWidget {
   const _ProfileSetupContent({
     required this.firebaseUser,
     required this.role,
+    required this.collegeRepository,
     required this.onSaved,
     required this.onBack,
   });
 
   final User firebaseUser;
   final UserRole role;
+  final CollegeRepository collegeRepository;
   final Future<void> Function(AppUser profile) onSaved;
   final VoidCallback onBack;
 
@@ -83,7 +88,9 @@ class _ProfileSetupContentState extends State<_ProfileSetupContent> {
   void initState() {
     super.initState();
     // TODO(post-launch): receive collegeId from auth flow once multi-college onboarding exists
-    context.read<CollegeCubit>().loadDepartments(_collegeId);
+    if (widget.role != UserRole.subjectTeacher) {
+      context.read<CollegeCubit>().loadDepartments(_collegeId);
+    }
   }
 
   String _subtitle() {
@@ -95,7 +102,7 @@ class _ProfileSetupContentState extends State<_ProfileSetupContent> {
       case UserRole.hod:
         return 'Select your department.';
       case UserRole.subjectTeacher:
-        return '';
+        return 'Select the departments and batches you teach.';
     }
   }
 
@@ -143,6 +150,51 @@ class _ProfileSetupContentState extends State<_ProfileSetupContent> {
     }
 
     await widget.onSaved(_buildProfile());
+  }
+
+  Future<void> _openStaffScopePicker() async {
+    final AppUser pickerUser = AppUser(
+      uid: widget.firebaseUser.uid,
+      name: widget.firebaseUser.displayName ?? '',
+      email: widget.firebaseUser.email ?? '',
+      role: widget.role,
+      collegeId: _collegeId,
+      photoUrl: widget.firebaseUser.photoURL,
+    );
+
+    final bool? saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (BuildContext context) => StaffScopePickerScreen(
+          user: pickerUser,
+          collegeRepository: widget.collegeRepository,
+        ),
+      ),
+    );
+
+    if (saved == true) {
+      List<UserScope> freshScopes = <UserScope>[];
+      try {
+        freshScopes = await widget.collegeRepository.getMyScopes(
+          role: widget.role,
+        );
+      } on ApiException catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Saved, but could not refresh your scopes. Pull to refresh '
+                'on Home if folders don\'t appear.',
+              ),
+            ),
+          );
+        }
+      }
+      final AppUser profile = _buildProfile();
+      final AppUser profileWithScopes = freshScopes.isEmpty
+          ? profile
+          : profile.copyWith(staffScopes: freshScopes);
+      await widget.onSaved(profileWithScopes);
+    }
   }
 
   Future<void> _handleScopeAssigned() async {
@@ -223,7 +275,11 @@ class _ProfileSetupContentState extends State<_ProfileSetupContent> {
         role: widget.role,
         dept: _selectedDepartment?.name,
         batch: _selectedBatch?.label,
-        collegeId: _selectedDepartment == null ? null : _collegeId,
+        collegeId:
+            widget.role == UserRole.subjectTeacher ||
+                _selectedDepartment != null
+            ? _collegeId
+            : null,
         departmentId: _selectedDepartment?.id,
         batchId: _selectedBatch?.id,
         deptName: _selectedDepartment?.name,
@@ -300,58 +356,69 @@ class _ProfileSetupContentState extends State<_ProfileSetupContent> {
                       color: Theme.of(context).colorScheme.error,
                     ),
                   ),
-                if (!loading && _needsDepartment)
-                  DropdownButtonFormField<Department>(
-                    initialValue: _selectedDepartment,
-                    decoration: const InputDecoration(
-                      labelText: 'Department',
-                      border: OutlineInputBorder(),
+                if (widget.role == UserRole.subjectTeacher) ...<Widget>[
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _saving ? null : _openStaffScopePicker,
+                      child: const Text('Select Departments & Batches'),
                     ),
-                    items: _departments
-                        .map(
-                          (Department department) =>
-                              DropdownMenuItem<Department>(
-                                value: department,
-                                child: Text(department.name),
-                              ),
-                        )
-                        .toList(),
-                    onChanged: _onDepartmentChanged,
                   ),
-                if (_needsDepartment) const SizedBox(height: 16),
-                if (!loading && _needsBatch && _selectedDepartment != null)
-                  DropdownButtonFormField<Batch>(
-                    initialValue: _selectedBatch,
-                    decoration: const InputDecoration(
-                      labelText: 'Batch',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: _batches
-                        .map(
-                          (Batch batch) => DropdownMenuItem<Batch>(
-                            value: batch,
-                            child: Text(batch.label),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (Batch? value) {
-                      setState(() => _selectedBatch = value);
-                    },
-                  ),
-                const Spacer(),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: _saving || loading ? null : _save,
-                    child: _saving
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                  const Spacer(),
+                ] else ...<Widget>[
+                  if (!loading && _needsDepartment)
+                    DropdownButtonFormField<Department>(
+                      initialValue: _selectedDepartment,
+                      decoration: const InputDecoration(
+                        labelText: 'Department',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: _departments
+                          .map(
+                            (Department department) =>
+                                DropdownMenuItem<Department>(
+                                  value: department,
+                                  child: Text(department.name),
+                                ),
                           )
-                        : const Text('Save and Continue'),
+                          .toList(),
+                      onChanged: _onDepartmentChanged,
+                    ),
+                  if (_needsDepartment) const SizedBox(height: 16),
+                  if (!loading && _needsBatch && _selectedDepartment != null)
+                    DropdownButtonFormField<Batch>(
+                      initialValue: _selectedBatch,
+                      decoration: const InputDecoration(
+                        labelText: 'Batch',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: _batches
+                          .map(
+                            (Batch batch) => DropdownMenuItem<Batch>(
+                              value: batch,
+                              child: Text(batch.label),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (Batch? value) {
+                        setState(() => _selectedBatch = value);
+                      },
+                    ),
+                  const Spacer(),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _saving || loading ? null : _save,
+                      child: _saving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Save and Continue'),
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
