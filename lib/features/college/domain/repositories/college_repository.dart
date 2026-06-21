@@ -15,6 +15,7 @@ abstract class CollegeRepository {
     required String collegeId,
     required String departmentId,
     required String batchId,
+    required String accessCode,
   });
 
   Future<void> assignStaffScope({
@@ -22,6 +23,7 @@ abstract class CollegeRepository {
     required String collegeId,
     required String departmentId,
     String? batchId,
+    required String accessCode,
   });
 
   Future<void> removeStaffScope(String scopeId);

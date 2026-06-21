@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/services/local_storage_service.dart';
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/domain/entities/user_role.dart';
 import '../../domain/entities/batch.dart';
@@ -332,6 +333,7 @@ class _StaffScopePickerContentState extends State<_StaffScopePickerContent> {
     final Set<_ScopeKey> originalKeys = originalScopeIds.keys.toSet();
     final Set<_ScopeKey> keysToAdd = desiredKeys.difference(originalKeys);
     final Set<_ScopeKey> keysToRemove = originalKeys.difference(desiredKeys);
+    final String accessCode = await LocalStorageService().getAccessCode() ?? '';
 
     try {
       for (final _ScopeKey key in keysToAdd) {
@@ -340,6 +342,7 @@ class _StaffScopePickerContentState extends State<_StaffScopePickerContent> {
           collegeId: collegeId,
           departmentId: key.departmentId,
           batchId: key.batchId,
+          accessCode: accessCode,
         );
       }
 

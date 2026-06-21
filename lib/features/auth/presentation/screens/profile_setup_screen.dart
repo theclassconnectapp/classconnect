@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/animation/motion.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/services/local_storage_service.dart';
 import '../../../college/domain/entities/batch.dart';
 import '../../../college/domain/entities/department.dart';
 import '../../../college/domain/entities/user_scope.dart';
@@ -121,6 +122,7 @@ class _ProfileSetupContentState extends State<_ProfileSetupContent> {
     final CollegeCubit cubit = context.read<CollegeCubit>();
     final Department? department = _selectedDepartment;
     final Batch? batch = _selectedBatch;
+    final String accessCode = await LocalStorageService().getAccessCode() ?? '';
 
     if (widget.role == UserRole.student || widget.role == UserRole.advisor) {
       if (department == null || batch == null) {
@@ -132,6 +134,7 @@ class _ProfileSetupContentState extends State<_ProfileSetupContent> {
         collegeId: _collegeId,
         departmentId: department.id,
         batchId: batch.id,
+        accessCode: accessCode,
       );
       return;
     }
@@ -143,6 +146,7 @@ class _ProfileSetupContentState extends State<_ProfileSetupContent> {
         collegeId: _collegeId,
         departmentId: department.id,
         batchId: batch?.id,
+        accessCode: accessCode,
       );
       return;
     }

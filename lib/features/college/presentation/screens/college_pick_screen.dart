@@ -41,6 +41,7 @@ class _CollegePickScreenState extends State<CollegePickScreen> {
   }
 
   Future<void> _select(College college) async {
+    String accessCode = '';
     if (college.accessCode != null) {
       final String? entered = await showDialog<String>(
         context: context,
@@ -80,7 +81,9 @@ class _CollegePickScreenState extends State<CollegePickScreen> {
         }
         return;
       }
+      accessCode = entered.trim();
     }
+    await LocalStorageService().saveAccessCode(accessCode);
     await LocalStorageService().saveCollegeId(college.id);
     if (!mounted) return;
     widget.onPicked(college.id);

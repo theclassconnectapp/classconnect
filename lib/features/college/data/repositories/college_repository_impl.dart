@@ -60,6 +60,7 @@ class CollegeRepositoryImpl implements CollegeRepository {
     required String collegeId,
     required String departmentId,
     required String batchId,
+    required String accessCode,
   }) async {
     try {
       await _apiClient.post(
@@ -69,6 +70,7 @@ class CollegeRepositoryImpl implements CollegeRepository {
           'college_id': collegeId,
           'department_id': departmentId,
           'batch_id': batchId,
+          'access_code': accessCode,
         },
       );
     } on ApiException {
@@ -82,6 +84,7 @@ class CollegeRepositoryImpl implements CollegeRepository {
     required String collegeId,
     required String departmentId,
     String? batchId,
+    required String accessCode,
   }) async {
     try {
       await _apiClient.post(
@@ -91,6 +94,7 @@ class CollegeRepositoryImpl implements CollegeRepository {
           'college_id': collegeId,
           'department_id': departmentId,
           'batch_id': ?batchId,
+          'access_code': accessCode,
         },
       );
     } on ApiException {

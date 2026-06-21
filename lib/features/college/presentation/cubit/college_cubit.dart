@@ -53,6 +53,7 @@ class CollegeCubit extends Cubit<CollegeState> {
     required String collegeId,
     required String departmentId,
     required String batchId,
+    required String accessCode,
   }) async {
     emit(const CollegeLoading());
     try {
@@ -61,6 +62,7 @@ class CollegeCubit extends Cubit<CollegeState> {
         collegeId: collegeId,
         departmentId: departmentId,
         batchId: batchId,
+        accessCode: accessCode,
       );
       emit(const CollegeScopeAssigned());
     } on ApiException catch (error) {
@@ -75,6 +77,7 @@ class CollegeCubit extends Cubit<CollegeState> {
     required String collegeId,
     required String departmentId,
     String? batchId,
+    required String accessCode,
   }) async {
     emit(const CollegeLoading());
     try {
@@ -83,6 +86,7 @@ class CollegeCubit extends Cubit<CollegeState> {
         collegeId: collegeId,
         departmentId: departmentId,
         batchId: batchId,
+        accessCode: accessCode,
       );
       emit(const CollegeScopeAssigned());
     } on ApiException catch (error) {
