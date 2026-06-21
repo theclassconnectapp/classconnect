@@ -68,7 +68,11 @@ class _StaffScopePickerContentState extends State<_StaffScopePickerContent> {
   @override
   void initState() {
     super.initState();
-    _loadInitialData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadInitialData();
+      }
+    });
   }
 
   Future<void> _loadInitialData() async {
