@@ -3,20 +3,20 @@ class College {
     required this.id,
     required this.name,
     this.logoUrl,
-    this.allowedEmailDomain,
+    this.accessCode,
   });
 
   final String id;
   final String name;
   final String? logoUrl;
-  final String? allowedEmailDomain;
+  final String? accessCode;
 
   factory College.fromMap(String id, Map<String, dynamic> data) {
     return College(
       id: id,
       name: data['name'] as String? ?? id,
       logoUrl: data['logoUrl'] as String?,
-      allowedEmailDomain: data['allowedEmailDomain'] as String?,
+      accessCode: data['accessCode'] as String?,
     );
   }
 }

@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/services/local_storage_service.dart';
@@ -42,19 +41,41 @@ class _CollegePickScreenState extends State<CollegePickScreen> {
   }
 
   Future<void> _select(College college) async {
-    if (college.allowedEmailDomain != null) {
-      final String? userEmail = FirebaseAuth.instance.currentUser?.email;
-      final String domain = college.allowedEmailDomain!.toLowerCase();
-      if (userEmail == null ||
-          !userEmail.toLowerCase().endsWith('@$domain')) {
+    if (college.accessCode != null) {
+      final String? entered = await showDialog<String>(
+        context: context,
+        builder: (context) {
+          final TextEditingController controller = TextEditingController();
+          return AlertDialog(
+            title: const Text('Enter Access Code'),
+            content: TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: const InputDecoration(hintText: 'Access code'),
+              obscureText: true,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, controller.text),
+                child: const Text('Continue'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (entered == null) {
+        return;
+      }
+
+      if (entered.trim() != college.accessCode) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'This college requires an email ending in @$domain. '
-                'Please sign in with your institutional account.',
-              ),
-            ),
+            const SnackBar(content: Text('Incorrect access code.')),
           );
         }
         return;
