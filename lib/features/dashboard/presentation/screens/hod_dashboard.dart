@@ -6,10 +6,7 @@ import '../../../groups/domain/repositories/group_repository.dart';
 import '../../../groups/presentation/screens/folder_list_screen.dart';
 
 class HodDashboard extends StatelessWidget {
-  const HodDashboard({
-    super.key,
-    required this.user,
-  });
+  const HodDashboard({super.key, required this.user});
 
   final AppUser user;
 

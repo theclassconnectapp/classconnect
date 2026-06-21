@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/di/injection_container.dart';
+import '../../domain/repositories/ai_repository.dart';
+import 'ai_chat_screen.dart';
+
 enum AiScope { semester, group }
 
 class AiAssistantScreen extends StatelessWidget {
@@ -16,18 +20,9 @@ class AiAssistantScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: const Text('Ask AI'),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        foregroundColor: colorScheme.onSurface,
-        elevation: 0,
-      ),
-      body: Center(
-        child: Text('Coming soon', style: TextStyle(fontSize: 16, color: colorScheme.onSurface)),
-      ),
-    );
+    // scope/semesterId/groupId are reserved for future context-aware AI
+    // (e.g. answering questions about a specific semester or group). For
+    // now this redirects to the shared ClassConnect AI chat experience.
+    return AiChatScreen(aiRepository: sl<AiRepository>());
   }
 }

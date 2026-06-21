@@ -53,9 +53,9 @@ class AuthCubit extends Cubit<AuthState> {
   AuthCubit({
     required AuthRepository authRepository,
     UserRepository? userRepository,
-  })  : _authRepository = authRepository,
-        _userRepository = userRepository,
-        super(AuthLoading()) {
+  }) : _authRepository = authRepository,
+       _userRepository = userRepository,
+       super(AuthLoading()) {
     _init();
   }
 

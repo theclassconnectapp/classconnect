@@ -27,10 +27,13 @@ class ImageViewerScreen extends StatelessWidget {
       body: PhotoView(
         imageProvider: NetworkImage(imageUrl),
         backgroundDecoration: BoxDecoration(color: colorScheme.surface),
-        loadingBuilder: (_, _) => const Center(child: CircularProgressIndicator()),
+        loadingBuilder: (_, _) =>
+            const Center(child: CircularProgressIndicator()),
         errorBuilder: (_, _, _) => Center(
-          child: Text('Failed to load image',
-              style: TextStyle(color: colorScheme.onSurface)),
+          child: Text(
+            'Failed to load image',
+            style: TextStyle(color: colorScheme.onSurface),
+          ),
         ),
       ),
     );
@@ -61,8 +64,9 @@ class _VideoViewerScreenState extends State<VideoViewerScreen> {
 
   Future<void> _init() async {
     try {
-      final VideoPlayerController controller =
-          VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+      final VideoPlayerController controller = VideoPlayerController.networkUrl(
+        Uri.parse(widget.videoUrl),
+      );
       await controller.initialize();
       if (!mounted) return;
       setState(() {
@@ -101,8 +105,8 @@ class _VideoViewerScreenState extends State<VideoViewerScreen> {
         child: _error != null
             ? Text(_error!, style: TextStyle(color: colorScheme.onSurface))
             : _chewieController == null
-                ? const CircularProgressIndicator()
-                : Chewie(controller: _chewieController!),
+            ? const CircularProgressIndicator()
+            : Chewie(controller: _chewieController!),
       ),
     );
   }
@@ -151,8 +155,8 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
       body: _error != null
           ? Center(child: Text(_error!))
           : _localPath == null
-              ? const Center(child: CircularProgressIndicator())
-              : PDFView(filePath: _localPath!),
+          ? const Center(child: CircularProgressIndicator())
+          : PDFView(filePath: _localPath!),
     );
   }
 }

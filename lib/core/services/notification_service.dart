@@ -10,7 +10,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 class NotificationService {
   NotificationService({required UserRepository userRepository})
-      : _userRepository = userRepository;
+    : _userRepository = userRepository;
 
   final UserRepository _userRepository;
   final FlutterLocalNotificationsPlugin _localNotifications =

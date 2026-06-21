@@ -70,18 +70,29 @@ class _CollegePickScreenState extends State<CollegePickScreen> {
               const SizedBox(height: 8),
               Text(
                 'Your data is scoped to your institution.',
-                style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.70), fontSize: 14),
+                style: TextStyle(
+                  color: colorScheme.onSurface.withValues(alpha: 0.70),
+                  fontSize: 14,
+                ),
               ),
               const SizedBox(height: 32),
               if (_loading)
-                Center(child: CircularProgressIndicator(color: colorScheme.primary))
+                Center(
+                  child: CircularProgressIndicator(color: colorScheme.primary),
+                )
               else if (_error != null)
-                Center(child: Text(_error!, style: TextStyle(color: colorScheme.error)))
+                Center(
+                  child: Text(
+                    _error!,
+                    style: TextStyle(color: colorScheme.error),
+                  ),
+                )
               else
                 Expanded(
                   child: ListView.separated(
                     itemCount: _colleges.length,
-                    separatorBuilder: (context, index) => const SizedBox(height: 12),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final college = _colleges[index];
                       return _CollegeCard(
@@ -115,9 +126,7 @@ class _CollegeCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: colorScheme.outline.withValues(alpha: 0.3),
-          ),
+          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
@@ -132,11 +141,19 @@ class _CollegeCard extends StatelessWidget {
             Expanded(
               child: Text(
                 college.name,
-                style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
-            Icon(Icons.arrow_forward_ios, size: 16, color: colorScheme.onSurface.withValues(alpha: 0.38)),
-          ]
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: colorScheme.onSurface.withValues(alpha: 0.38),
+            ),
+          ],
         ),
       ),
     );

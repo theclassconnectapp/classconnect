@@ -31,8 +31,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _editName() async {
-    final TextEditingController controller =
-        TextEditingController(text: widget.user.name);
+    final TextEditingController controller = TextEditingController(
+      text: widget.user.name,
+    );
     final String? name = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
@@ -63,9 +64,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Display name updated')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Display name updated')));
   }
 
   Future<void> _confirmSignOut() async {
@@ -132,7 +133,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               child: Text(
                 'Profile',
-                style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 15),
+                style: TextStyle(
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
               ),
             ),
             const SizedBox(height: 32),
@@ -172,8 +177,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               GestureDetector(
                 onTap: _editName,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: colorScheme.surface,
                     borderRadius: BorderRadius.circular(30),
@@ -181,11 +188,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.edit_outlined, size: 18, color: colorScheme.onSurface),
+                      Icon(
+                        Icons.edit_outlined,
+                        size: 18,
+                        color: colorScheme.onSurface,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Edit',
-                        style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize:15),
+                        style: TextStyle(
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
                       ),
                     ],
                   ),
@@ -214,7 +229,11 @@ class _InfoPill extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.w600, fontSize: 14),
+        style: TextStyle(
+          color: colorScheme.onSurface,
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
+        ),
       ),
     );
   }

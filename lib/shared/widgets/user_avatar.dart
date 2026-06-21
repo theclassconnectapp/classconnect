@@ -32,10 +32,7 @@ class UserAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     if (photoUrl == null || photoUrl!.isEmpty) {
-      return CircleAvatar(
-        radius: radius,
-        child: Text(_initials),
-      );
+      return CircleAvatar(radius: radius, child: Text(_initials));
     }
     return CircleAvatar(
       radius: radius,
@@ -46,11 +43,11 @@ class UserAvatar extends StatelessWidget {
           width: radius * 2,
           height: radius * 2,
           fit: BoxFit.cover,
-          errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) =>
-              Center(child: Text(_initials)),
+          errorBuilder:
+              (BuildContext context, Object error, StackTrace? stackTrace) =>
+                  Center(child: Text(_initials)),
         ),
       ),
     );
   }
 }
-

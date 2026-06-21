@@ -29,7 +29,9 @@ class AppTheme {
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
         elevation: 0,
-        titleTextStyle: AppTextThemes.lightTextTheme.titleLarge?.copyWith(color: colorScheme.onPrimary),
+        titleTextStyle: AppTextThemes.lightTextTheme.titleLarge?.copyWith(
+          color: colorScheme.onPrimary,
+        ),
         iconTheme: IconThemeData(color: colorScheme.onPrimary),
       ),
       textTheme: AppTextThemes.lightTextTheme,
@@ -51,12 +53,17 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: colorScheme.surface,
-        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 12,
+          horizontal: 12,
+        ),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: colorScheme.surface,
-        titleTextStyle: AppTextThemes.lightTextTheme.titleLarge?.copyWith(color: AppColors.light.onSurface),
+        titleTextStyle: AppTextThemes.lightTextTheme.titleLarge?.copyWith(
+          color: AppColors.light.onSurface,
+        ),
         contentTextStyle: AppTextThemes.lightTextTheme.bodyMedium,
       ),
       cardTheme: CardThemeData(
@@ -66,7 +73,9 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: colorScheme.onPrimary.withValues(alpha: 0.12),
-        contentTextStyle: AppTextThemes.lightTextTheme.bodyMedium?.copyWith(color: colorScheme.onPrimary),
+        contentTextStyle: AppTextThemes.lightTextTheme.bodyMedium?.copyWith(
+          color: colorScheme.onPrimary,
+        ),
       ),
       visualDensity: VisualDensity.adaptivePlatformDensity,
     );
@@ -94,7 +103,9 @@ class AppTheme {
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
         elevation: 0,
-        titleTextStyle: AppTextThemes.darkTextTheme.titleLarge?.copyWith(color: colorScheme.onPrimary),
+        titleTextStyle: AppTextThemes.darkTextTheme.titleLarge?.copyWith(
+          color: colorScheme.onPrimary,
+        ),
         iconTheme: IconThemeData(color: colorScheme.onPrimary),
       ),
       textTheme: AppTextThemes.darkTextTheme,
@@ -116,12 +127,17 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: colorScheme.surface,
-        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 12,
+          horizontal: 12,
+        ),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: colorScheme.surface,
-        titleTextStyle: AppTextThemes.darkTextTheme.titleLarge?.copyWith(color: AppColors.dark.onSurface),
+        titleTextStyle: AppTextThemes.darkTextTheme.titleLarge?.copyWith(
+          color: AppColors.dark.onSurface,
+        ),
         contentTextStyle: AppTextThemes.darkTextTheme.bodyMedium,
       ),
       cardTheme: CardThemeData(
@@ -131,7 +147,9 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: colorScheme.onPrimary.withValues(alpha: 0.12),
-        contentTextStyle: AppTextThemes.darkTextTheme.bodyMedium?.copyWith(color: colorScheme.onPrimary),
+        contentTextStyle: AppTextThemes.darkTextTheme.bodyMedium?.copyWith(
+          color: colorScheme.onPrimary,
+        ),
       ),
       visualDensity: VisualDensity.adaptivePlatformDensity,
     );

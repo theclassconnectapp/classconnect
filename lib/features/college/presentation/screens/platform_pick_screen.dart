@@ -48,9 +48,8 @@ class PlatformPickScreen extends StatelessWidget {
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
-                      builder: (_) => CollegePickScreen(
-                        onPicked: onCollegePicked,
-                      ),
+                      builder: (_) =>
+                          CollegePickScreen(onPicked: onCollegePicked),
                     ),
                   );
                 },
@@ -62,7 +61,9 @@ class PlatformPickScreen extends StatelessWidget {
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Coming Soon — only College is available right now'),
+                      content: Text(
+                        'Coming Soon — only College is available right now',
+                      ),
                     ),
                   );
                 },
@@ -74,7 +75,9 @@ class PlatformPickScreen extends StatelessWidget {
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Coming Soon — only College is available right now'),
+                      content: Text(
+                        'Coming Soon — only College is available right now',
+                      ),
                     ),
                   );
                 },
@@ -127,9 +130,7 @@ class _PlatformCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: colorScheme.outline.withValues(alpha: 0.3),
-          ),
+          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
@@ -145,7 +146,11 @@ class _PlatformCard extends StatelessWidget {
                 ),
               ),
             ),
-            Icon(Icons.arrow_forward_ios, size: 16, color: colorScheme.onSurface.withValues(alpha: 0.38)),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: colorScheme.onSurface.withValues(alpha: 0.38),
+            ),
           ],
         ),
       ),

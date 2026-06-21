@@ -5,8 +5,8 @@ import '../../services/local_storage_service.dart';
 
 class ThemeCubit extends Cubit<ThemeMode> {
   ThemeCubit({required LocalStorageService storage})
-      : _storage = storage,
-        super(ThemeMode.system) {
+    : _storage = storage,
+      super(ThemeMode.system) {
     _init();
   }
 

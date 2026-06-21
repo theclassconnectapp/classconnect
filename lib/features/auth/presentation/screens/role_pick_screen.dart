@@ -26,9 +26,10 @@ class _RolePickScreenState extends State<RolePickScreen>
       duration: const Duration(milliseconds: 700),
     );
     _fadeAnim = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
-    _slideAnim = Tween<double>(begin: 32, end: 0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
+    _slideAnim = Tween<double>(
+      begin: 32,
+      end: 0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
     _controller.forward();
   }
 
@@ -39,10 +40,14 @@ class _RolePickScreenState extends State<RolePickScreen>
   }
 
   static const List<_RoleMeta> _roles = [
-    _RoleMeta(UserRole.student,        Icons.school_rounded,          'Student'),
-    _RoleMeta(UserRole.subjectTeacher, Icons.menu_book_rounded,       'Subject Teacher'),
-    _RoleMeta(UserRole.advisor,        Icons.groups_rounded,          'Class Advisor'),
-    _RoleMeta(UserRole.hod,            Icons.account_balance_rounded, 'HOD'),
+    _RoleMeta(UserRole.student, Icons.school_rounded, 'Student'),
+    _RoleMeta(
+      UserRole.subjectTeacher,
+      Icons.menu_book_rounded,
+      'Subject Teacher',
+    ),
+    _RoleMeta(UserRole.advisor, Icons.groups_rounded, 'Class Advisor'),
+    _RoleMeta(UserRole.hod, Icons.account_balance_rounded, 'HOD'),
   ];
 
   @override
@@ -56,7 +61,16 @@ class _RolePickScreenState extends State<RolePickScreen>
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: widget.onBack != null ? IconButton(icon: const Icon(Icons.arrow_back), onPressed: widget.onBack) : null),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: widget.onBack != null
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: widget.onBack,
+              )
+            : null,
+      ),
       body: AnimatedBuilder(
         animation: _controller,
         builder: (context, child) => Opacity(
@@ -97,7 +111,10 @@ class _RolePickScreenState extends State<RolePickScreen>
                   ),
                 ),
                 const SizedBox(height: 16),
-                Divider(thickness: 1, color: Theme.of(context).colorScheme.outlineVariant),
+                Divider(
+                  thickness: 1,
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
                 const SizedBox(height: 8),
                 Text(
                   'Your role determines your access level',
@@ -220,15 +237,15 @@ class _AnimatedRoleCardState extends State<_AnimatedRoleCard>
   void initState() {
     super.initState();
     final start = (widget.index * 0.12).clamp(0.0, 0.7);
-    final end   = (start + 0.4).clamp(0.0, 1.0);
+    final end = (start + 0.4).clamp(0.0, 1.0);
     _entranceAnim = CurvedAnimation(
       parent: widget.controller,
       curve: Interval(start, end, curve: Curves.easeOutBack),
     );
   }
 
-  void _onTapDown(_)  => setState(() => _scale = 0.93);
-  void _onTapUp(_)    => setState(() => _scale = 1.0);
+  void _onTapDown(_) => setState(() => _scale = 0.93);
+  void _onTapUp(_) => setState(() => _scale = 1.0);
   void _onTapCancel() => setState(() => _scale = 1.0);
 
   @override

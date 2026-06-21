@@ -2,11 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthRemoteDataSource {
-  AuthRemoteDataSource({
-    FirebaseAuth? auth,
-    GoogleSignIn? googleSignIn,
-  })  : _auth = auth ?? FirebaseAuth.instance,
-        _googleSignIn = googleSignIn ?? GoogleSignIn.instance;
+  AuthRemoteDataSource({FirebaseAuth? auth, GoogleSignIn? googleSignIn})
+    : _auth = auth ?? FirebaseAuth.instance,
+      _googleSignIn = googleSignIn ?? GoogleSignIn.instance;
 
   final FirebaseAuth _auth;
   final GoogleSignIn _googleSignIn;
@@ -18,10 +16,9 @@ class AuthRemoteDataSource {
   Future<UserCredential> signInWithGoogle() async {
     final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
     final GoogleSignInAuthentication googleAuth = googleUser.authentication;
-    final GoogleSignInClientAuthorization? authorization =
-        await googleUser.authorizationClient.authorizationForScopes(
-      <String>['email', 'profile'],
-    );
+    final GoogleSignInClientAuthorization? authorization = await googleUser
+        .authorizationClient
+        .authorizationForScopes(<String>['email', 'profile']);
 
     final AuthCredential credential = GoogleAuthProvider.credential(
       accessToken: authorization?.accessToken,
@@ -32,9 +29,6 @@ class AuthRemoteDataSource {
   }
 
   Future<void> signOut() async {
-    await Future.wait(<Future<void>>[
-      _auth.signOut(),
-      _googleSignIn.signOut(),
-    ]);
+    await Future.wait(<Future<void>>[_auth.signOut(), _googleSignIn.signOut()]);
   }
 }

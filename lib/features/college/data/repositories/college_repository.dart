@@ -3,7 +3,7 @@ import '../../domain/entities/college.dart';
 
 class CollegeRepository {
   CollegeRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
 

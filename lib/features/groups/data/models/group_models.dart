@@ -124,7 +124,8 @@ class ChatMessage {
       fileType: data['fileType'] as String?,
       fileSize: (data['fileSize'] as num?)?.toInt(),
       thumbnailUrl: data['thumbnailUrl'] as String?,
-      reactions: (data['reactions'] as Map<String, dynamic>?) ?? <String, dynamic>{},
+      reactions:
+          (data['reactions'] as Map<String, dynamic>?) ?? <String, dynamic>{},
       isDeleted: data['isDeleted'] as bool? ?? false,
       replyTo: data['replyTo'] as Map<String, dynamic>?,
       isForwarded: data['isForwarded'] as bool? ?? false,

@@ -8,7 +8,12 @@ class Logger {
   /// Enable or disable logging globally; defaults to true in debug builds.
   static bool enabled = true;
 
-  static void _log(String level, String message, {Object? error, StackTrace? stackTrace}) {
+  static void _log(
+    String level,
+    String message, {
+    Object? error,
+    StackTrace? stackTrace,
+  }) {
     if (!enabled) return;
     final String time = DateTime.now().toIso8601String();
     final String full = '[$time] [$level] $message';

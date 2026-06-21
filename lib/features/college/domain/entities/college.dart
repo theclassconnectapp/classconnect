@@ -1,9 +1,5 @@
 class College {
-  const College({
-    required this.id,
-    required this.name,
-    this.logoUrl,
-  });
+  const College({required this.id, required this.name, this.logoUrl});
 
   final String id;
   final String name;

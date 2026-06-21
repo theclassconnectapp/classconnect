@@ -5,7 +5,7 @@ import '../datasources/auth_remote_data_source.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({AuthRemoteDataSource? dataSource})
-      : _dataSource = dataSource ?? AuthRemoteDataSource();
+    : _dataSource = dataSource ?? AuthRemoteDataSource();
 
   final AuthRemoteDataSource _dataSource;
 

@@ -7,11 +7,9 @@ import 'package:http/http.dart' as http;
 import 'api_exception.dart';
 
 class ApiClient {
-  ApiClient({
-    required http.Client httpClient,
-    FirebaseAuth? firebaseAuth,
-  })  : _httpClient = httpClient,
-        _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
+  ApiClient({required http.Client httpClient, FirebaseAuth? firebaseAuth})
+    : _httpClient = httpClient,
+      _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
 
   final http.Client _httpClient;
   final FirebaseAuth _firebaseAuth;
@@ -47,7 +45,9 @@ class ApiClient {
     }
 
     final Uri baseUri = Uri.parse(baseUrl);
-    final String normalizedPath = path.startsWith('/') ? path.substring(1) : path;
+    final String normalizedPath = path.startsWith('/')
+        ? path.substring(1)
+        : path;
     return baseUri.resolve(normalizedPath);
   }
 

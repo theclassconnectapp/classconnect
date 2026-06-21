@@ -5,10 +5,8 @@ import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/user_repository.dart';
 
 class UserRepositoryImpl implements UserRepository {
-  UserRepositoryImpl({
-    required this.collegeId,
-    FirebaseFirestore? firestore,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance;
+  UserRepositoryImpl({required this.collegeId, FirebaseFirestore? firestore})
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final String collegeId;
   final FirebaseFirestore _firestore;
@@ -19,8 +17,9 @@ class UserRepositoryImpl implements UserRepository {
   @override
   Future<AppUser?> getUser(String uid) async {
     try {
-      final DocumentSnapshot<Map<String, dynamic>> doc =
-          await _users.doc(uid).get();
+      final DocumentSnapshot<Map<String, dynamic>> doc = await _users
+          .doc(uid)
+          .get();
       if (!doc.exists) return null;
       return AppUser.fromFirestore(doc);
     } catch (e) {
@@ -38,12 +37,14 @@ class UserRepositoryImpl implements UserRepository {
   }
 
   @override
-  Future<void> saveFcmToken({required String uid, required String token}) async {
+  Future<void> saveFcmToken({
+    required String uid,
+    required String token,
+  }) async {
     try {
-      await _users.doc(uid).set(
-        <String, dynamic>{'fcmToken': token},
-        SetOptions(merge: true),
-      );
+      await _users.doc(uid).set(<String, dynamic>{
+        'fcmToken': token,
+      }, SetOptions(merge: true));
     } catch (e) {
       throw Exception('Failed to save FCM token: $e');
     }

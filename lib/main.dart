@@ -13,14 +13,18 @@ import 'core/presentation/controllers/theme_cubit.dart';
 import 'features/groups/domain/repositories/group_repository.dart';
 import 'shared/widgets/in_app_notification_banner.dart';
 
-const String _googleWebClientId =
-    String.fromEnvironment('GOOGLE_WEB_CLIENT_ID', defaultValue: '');
+const String _googleWebClientId = String.fromEnvironment(
+  'GOOGLE_WEB_CLIENT_ID',
+  defaultValue: '',
+);
 
 const String _fallbackGoogleWebClientId =
     '703382214228-r8psaei6tcq2c5hairjiractfjh79h5a.apps.googleusercontent.com';
 
-const String _environmentName =
-    String.fromEnvironment('ENVIRONMENT', defaultValue: 'development');
+const String _environmentName = String.fromEnvironment(
+  'ENVIRONMENT',
+  defaultValue: 'development',
+);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,8 +65,8 @@ class _ClassConnectBootAppState extends State<ClassConnectBootApp> {
       final String? clientId = _googleWebClientId.isNotEmpty
           ? _googleWebClientId
           : (_fallbackGoogleWebClientId.contains('your-web-client-id')
-              ? null
-              : _fallbackGoogleWebClientId);
+                ? null
+                : _fallbackGoogleWebClientId);
 
       await GoogleSignIn.instance
           .initialize(serverClientId: clientId)

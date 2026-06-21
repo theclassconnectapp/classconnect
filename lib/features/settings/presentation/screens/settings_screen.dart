@@ -13,12 +13,11 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-
   Future<void> _showComingSoon() async {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Coming soon')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Coming soon')));
   }
 
   Future<void> _confirmSignOut() async {
@@ -38,7 +37,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
               child: const Text('Sign Out'),
             ),
           ],
@@ -144,7 +145,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Widget _buildSection({required String header, required List<Widget> children}) {
+  Widget _buildSection({
+    required String header,
+    required List<Widget> children,
+  }) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -206,7 +210,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      child: Text('APPEARANCE', style: TextStyle(color: colorScheme.onSurface, fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 1.2)),
+                      child: Text(
+                        'APPEARANCE',
+                        style: TextStyle(
+                          color: colorScheme.onSurface,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
                     ),
                     RadioGroup<ThemeMode>(
                       groupValue: currentThemeMode,
@@ -219,15 +231,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         children: [
                           RadioListTile<ThemeMode>(
                             value: ThemeMode.light,
-                            title: Text('Light', style: TextStyle(color: colorScheme.onSurface)),
+                            title: Text(
+                              'Light',
+                              style: TextStyle(color: colorScheme.onSurface),
+                            ),
                           ),
                           RadioListTile<ThemeMode>(
                             value: ThemeMode.dark,
-                            title: Text('Dark', style: TextStyle(color: colorScheme.onSurface)),
+                            title: Text(
+                              'Dark',
+                              style: TextStyle(color: colorScheme.onSurface),
+                            ),
                           ),
                           RadioListTile<ThemeMode>(
                             value: ThemeMode.system,
-                            title: Text('System', style: TextStyle(color: colorScheme.onSurface)),
+                            title: Text(
+                              'System',
+                              style: TextStyle(color: colorScheme.onSurface),
+                            ),
                           ),
                         ],
                       ),
@@ -244,11 +265,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: const Text('Privacy Policy'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () async {
-                    final Uri url = Uri.parse('https://theclassconnect-privacy.pages.dev/');
+                    final Uri url = Uri.parse(
+                      'https://theclassconnect-privacy.pages.dev/',
+                    );
                     final messenger = ScaffoldMessenger.of(context);
-                    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                    if (!await launchUrl(
+                      url,
+                      mode: LaunchMode.externalApplication,
+                    )) {
                       messenger.showSnackBar(
-                        const SnackBar(content: Text('Could not open the link')),
+                        const SnackBar(
+                          content: Text('Could not open the link'),
+                        ),
                       );
                     }
                   },
@@ -262,7 +290,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ListTile(
                   leading: const Icon(Icons.info_outline),
                   title: const Text('About'),
-                  trailing: Text('v1.0.0', style: TextStyle(color: colorScheme.onSurface.withAlpha(153))),
+                  trailing: Text(
+                    'v1.0.0',
+                    style: TextStyle(
+                      color: colorScheme.onSurface.withAlpha(153),
+                    ),
+                  ),
                   onTap: null,
                 ),
               ],
@@ -279,8 +312,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: _confirmSignOut,
                 ),
                 ListTile(
-                  leading: Icon(Icons.delete_forever_outlined, color: colorScheme.error),
-                  title: Text('Delete Account', style: TextStyle(color: colorScheme.error)),
+                  leading: Icon(
+                    Icons.delete_forever_outlined,
+                    color: colorScheme.error,
+                  ),
+                  title: Text(
+                    'Delete Account',
+                    style: TextStyle(color: colorScheme.error),
+                  ),
                   subtitle: Text(
                     'This action cannot be undone',
                     style: TextStyle(color: colorScheme.error.withAlpha(153)),

@@ -28,11 +28,13 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
 
   bool get _isSuperAdmin {
     final String dept = (widget.groupData['dept'] as String?) ?? '';
-    return widget.currentUser.role == UserRole.hod && widget.currentUser.dept == dept;
+    return widget.currentUser.role == UserRole.hod &&
+        widget.currentUser.dept == dept;
   }
 
   bool get _isAdmin {
-    final List<dynamic> admins = (widget.groupData['admins'] as List<dynamic>?) ?? <dynamic>[];
+    final List<dynamic> admins =
+        (widget.groupData['admins'] as List<dynamic>?) ?? <dynamic>[];
     return admins.contains(widget.currentUser.uid) || _isSuperAdmin;
   }
 
@@ -93,7 +95,9 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to update group. Please try again.')),
+        const SnackBar(
+          content: Text('Failed to update group. Please try again.'),
+        ),
       );
     }
   }
@@ -111,16 +115,19 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
         groupId: widget.groupId,
         file: result.files.first,
       );
-      await widget.groupRepository.setGroupPhotoUrl(groupId: widget.groupId, photoUrl: url);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Photo updated.')),
+      await widget.groupRepository.setGroupPhotoUrl(
+        groupId: widget.groupId,
+        photoUrl: url,
       );
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Photo updated.')));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to set photo: \$e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to set photo: \$e')));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -128,7 +135,10 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
 
   Future<void> _removePhoto() async {
     setState(() => _saving = true);
-    await widget.groupRepository.setGroupPhotoUrl(groupId: widget.groupId, photoUrl: null);
+    await widget.groupRepository.setGroupPhotoUrl(
+      groupId: widget.groupId,
+      photoUrl: null,
+    );
     if (!mounted) return;
     setState(() => _saving = false);
   }
@@ -145,8 +155,9 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
         children: <Widget>[
           CircleAvatar(
             radius: 34,
-            backgroundImage:
-                photoUrl != null && photoUrl.isNotEmpty ? NetworkImage(photoUrl) : null,
+            backgroundImage: photoUrl != null && photoUrl.isNotEmpty
+                ? NetworkImage(photoUrl)
+                : null,
             child: photoUrl == null || photoUrl.isEmpty
                 ? Text(name.isEmpty ? '?' : name[0].toUpperCase())
                 : null,
@@ -180,4 +191,3 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
     );
   }
 }
-

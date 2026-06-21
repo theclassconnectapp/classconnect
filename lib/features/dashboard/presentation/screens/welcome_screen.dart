@@ -123,21 +123,15 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   _WelcomeContent _contentFor(UserRole role) {
     switch (role) {
       case UserRole.student:
-        return const _WelcomeContent(
-          icon: Icons.school_outlined,
-        );
+        return const _WelcomeContent(icon: Icons.school_outlined);
       case UserRole.advisor:
         return const _WelcomeContent(
           icon: Icons.supervised_user_circle_outlined,
         );
       case UserRole.hod:
-        return const _WelcomeContent(
-          icon: Icons.account_balance_outlined,
-        );
+        return const _WelcomeContent(icon: Icons.account_balance_outlined);
       case UserRole.subjectTeacher:
-        return const _WelcomeContent(
-          icon: Icons.menu_book_outlined,
-        );
+        return const _WelcomeContent(icon: Icons.menu_book_outlined);
     }
   }
 
@@ -172,8 +166,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 }
 
 class _WelcomeContent {
-  const _WelcomeContent({
-    required this.icon,
-  });
+  const _WelcomeContent({required this.icon});
   final IconData icon;
 }

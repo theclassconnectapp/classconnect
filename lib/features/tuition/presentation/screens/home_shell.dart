@@ -25,15 +25,28 @@ class _HomeShellState extends State<HomeShell> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.chat_bubble_outline, size: 48, color: colorScheme.onSurface.withValues(alpha: 0.54)),
+            Icon(
+              Icons.chat_bubble_outline,
+              size: 48,
+              color: colorScheme.onSurface.withValues(alpha: 0.54),
+            ),
             const SizedBox(height: 16),
-            Text('Private chat',
-                style: TextStyle(
-                    color: colorScheme.onSurface,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold)),
+            Text(
+              'Private chat',
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 8),
-            Text('Coming soon', style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.60), fontSize: 14)),
+            Text(
+              'Coming soon',
+              style: TextStyle(
+                color: colorScheme.onSurface.withValues(alpha: 0.60),
+                fontSize: 14,
+              ),
+            ),
           ],
         ),
       ),
@@ -92,7 +105,12 @@ class _HomeShellState extends State<HomeShell> {
 }
 
 class _NavItem extends StatelessWidget {
-  const _NavItem({required this.icon, required this.label, required this.selected, required this.onTap});
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String label;
@@ -114,9 +132,21 @@ class _NavItem extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 26, color: selected ? colorScheme.onPrimary : colorScheme.onSurface),
+              Icon(
+                icon,
+                size: 26,
+                color: selected ? colorScheme.onPrimary : colorScheme.onSurface,
+              ),
               const SizedBox(height: 4),
-              Text(label, style: TextStyle(fontSize: 11, color: selected ? colorScheme.onPrimary : colorScheme.onSurface)),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: selected
+                      ? colorScheme.onPrimary
+                      : colorScheme.onSurface,
+                ),
+              ),
             ],
           ),
         ),

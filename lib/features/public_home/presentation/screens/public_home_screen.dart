@@ -20,17 +20,28 @@ class _PublicHomeScreenState extends State<PublicHomeScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Text(
               'Class Connect',
-              style: TextStyle(color: colorScheme.onSurface, fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              decoration: BoxDecoration(color: colorScheme.surface, borderRadius: BorderRadius.circular(30)),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(30),
+              ),
               child: Text(
                 'Public access',
-                style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold, fontSize: 15),
+                style: TextStyle(
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
               ),
             ),
           ),
@@ -42,18 +53,28 @@ class _PublicHomeScreenState extends State<PublicHomeScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.explore_outlined, color: colorScheme.onSurface.withAlpha(138), size: 48),
+                    Icon(
+                      Icons.explore_outlined,
+                      color: colorScheme.onSurface.withAlpha(138),
+                      size: 48,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'Browsing as guest',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: colorScheme.onSurface.withAlpha(179), fontSize: 16),
+                      style: TextStyle(
+                        color: colorScheme.onSurface.withAlpha(179),
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Pick your college to unlock semesters, groups, and chat',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: colorScheme.onSurface.withAlpha(140), fontSize: 13),
+                      style: TextStyle(
+                        color: colorScheme.onSurface.withAlpha(140),
+                        fontSize: 13,
+                      ),
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton(
@@ -76,13 +97,28 @@ class _PublicHomeScreenState extends State<PublicHomeScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.chat_bubble_outline, size: 48, color: colorScheme.onSurface.withValues(alpha: 0.54)),
+          Icon(
+            Icons.chat_bubble_outline,
+            size: 48,
+            color: colorScheme.onSurface.withValues(alpha: 0.54),
+          ),
           const SizedBox(height: 16),
-          Text('Private chat',
-              style: TextStyle(color: colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            'Private chat',
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 8),
-          Text('Sign in to access chat',
-              style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.60), fontSize: 14)),
+          Text(
+            'Sign in to access chat',
+            style: TextStyle(
+              color: colorScheme.onSurface.withValues(alpha: 0.60),
+              fontSize: 14,
+            ),
+          ),
         ],
       ),
     );
@@ -94,10 +130,20 @@ class _PublicHomeScreenState extends State<PublicHomeScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.person_outline, size: 48, color: colorScheme.onSurface.withValues(alpha: 0.54)),
+          Icon(
+            Icons.person_outline,
+            size: 48,
+            color: colorScheme.onSurface.withValues(alpha: 0.54),
+          ),
           const SizedBox(height: 16),
-          Text("You're browsing as a guest",
-              style: TextStyle(color: colorScheme.onSurface, fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            "You're browsing as a guest",
+            style: TextStyle(
+              color: colorScheme.onSurface,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 8),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -124,10 +170,7 @@ class _PublicHomeScreenState extends State<PublicHomeScreen> {
             opacity: isActive ? 1.0 : 0.0,
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeInOut,
-            child: IgnorePointer(
-              ignoring: !isActive,
-              child: tabs[i],
-            ),
+            child: IgnorePointer(ignoring: !isActive, child: tabs[i]),
           );
         }),
       ),
@@ -135,9 +178,24 @@ class _PublicHomeScreenState extends State<PublicHomeScreen> {
         color: colorScheme.primary,
         child: Row(
           children: [
-            _NavItem(icon: Icons.chat_bubble_outline, label: 'Chat', selected: _selectedIndex == 0, onTap: () => setState(() => _selectedIndex = 0)),
-            _NavItem(icon: Icons.home_outlined, label: 'Home', selected: _selectedIndex == 1, onTap: () => setState(() => _selectedIndex = 1)),
-            _NavItem(icon: Icons.person_outline, label: 'Profile', selected: _selectedIndex == 2, onTap: () => setState(() => _selectedIndex = 2)),
+            _NavItem(
+              icon: Icons.chat_bubble_outline,
+              label: 'Chat',
+              selected: _selectedIndex == 0,
+              onTap: () => setState(() => _selectedIndex = 0),
+            ),
+            _NavItem(
+              icon: Icons.home_outlined,
+              label: 'Home',
+              selected: _selectedIndex == 1,
+              onTap: () => setState(() => _selectedIndex = 1),
+            ),
+            _NavItem(
+              icon: Icons.person_outline,
+              label: 'Profile',
+              selected: _selectedIndex == 2,
+              onTap: () => setState(() => _selectedIndex = 2),
+            ),
           ],
         ),
       ),
@@ -146,7 +204,12 @@ class _PublicHomeScreenState extends State<PublicHomeScreen> {
 }
 
 class _NavItem extends StatelessWidget {
-  const _NavItem({required this.icon, required this.label, required this.selected, required this.onTap});
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
   final IconData icon;
   final String label;
   final bool selected;
@@ -162,7 +225,10 @@ class _NavItem extends StatelessWidget {
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeInOut,
           color: selected ? colorScheme.primary : colorScheme.surface,
-          padding: EdgeInsets.only(top: 10, bottom: 10 + MediaQuery.of(context).padding.bottom),
+          padding: EdgeInsets.only(
+            top: 10,
+            bottom: 10 + MediaQuery.of(context).padding.bottom,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -170,12 +236,21 @@ class _NavItem extends StatelessWidget {
                 scale: selected ? 1.15 : 1.0,
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOutBack,
-                child: Icon(icon, size: 26, color: selected ? colorScheme.onPrimary : colorScheme.onSurface),
+                child: Icon(
+                  icon,
+                  size: 26,
+                  color: selected
+                      ? colorScheme.onPrimary
+                      : colorScheme.onSurface,
+                ),
               ),
               const SizedBox(height: 4),
               AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 220),
-                style: TextStyle(fontSize: 11, color: selected ? colorScheme.primary : colorScheme.onPrimary),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: selected ? colorScheme.primary : colorScheme.onPrimary,
+                ),
                 child: Text(label),
               ),
             ],
