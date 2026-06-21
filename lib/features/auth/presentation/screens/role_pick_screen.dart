@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/animation/motion.dart';
 import '../../domain/entities/user_role.dart';
 
 class RolePickScreen extends StatefulWidget {
@@ -65,9 +66,12 @@ class _RolePickScreenState extends State<RolePickScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: widget.onBack != null
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: widget.onBack,
+            ? PressableScale(
+                onTap: widget.onBack,
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: widget.onBack,
+                ),
               )
             : null,
       ),
@@ -231,7 +235,6 @@ class _AnimatedRoleCard extends StatefulWidget {
 class _AnimatedRoleCardState extends State<_AnimatedRoleCard>
     with SingleTickerProviderStateMixin {
   late final Animation<double> _entranceAnim;
-  double _scale = 1.0;
 
   @override
   void initState() {
@@ -244,10 +247,6 @@ class _AnimatedRoleCardState extends State<_AnimatedRoleCard>
     );
   }
 
-  void _onTapDown(_) => setState(() => _scale = 0.93);
-  void _onTapUp(_) => setState(() => _scale = 1.0);
-  void _onTapCancel() => setState(() => _scale = 1.0);
-
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -259,17 +258,9 @@ class _AnimatedRoleCardState extends State<_AnimatedRoleCard>
           child: child,
         ),
       ),
-      child: GestureDetector(
-        onTapDown: _onTapDown,
-        onTapUp: _onTapUp,
-        onTapCancel: _onTapCancel,
+      child: PressableScale(
         onTap: widget.onTap,
-        child: AnimatedScale(
-          scale: _scale,
-          duration: const Duration(milliseconds: 120),
-          curve: Curves.easeOut,
-          child: _RoleCard(meta: widget.meta),
-        ),
+        child: _RoleCard(meta: widget.meta),
       ),
     );
   }

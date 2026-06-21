@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/animation/motion.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../shared/widgets/user_avatar.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/user_repository.dart';
 import '../../presentation/controllers/auth_controller.dart';
-import '../../../../shared/widgets/user_avatar.dart';
-import '../../../../core/di/injection_container.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
@@ -40,9 +41,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text('Edit display name'),
         content: TextField(controller: controller),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+          PressableScale(
+            onTap: () => Navigator.of(context).pop(),
+            child: TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(controller.text.trim()),
@@ -76,13 +80,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text('Sign out'),
         content: const Text('You are about to sign out. Are you sure?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('No'),
+          PressableScale(
+            onTap: () => Navigator.pop(context, false),
+            child: TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('No'),
+            ),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Yes'),
+          PressableScale(
+            onTap: () => Navigator.pop(context, true),
+            child: TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Yes'),
+            ),
           ),
         ],
       ),
@@ -118,9 +128,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   if (widget.isOwnProfile)
-                    IconButton(
-                      icon: Icon(Icons.logout, color: colorScheme.onSurface),
-                      onPressed: _confirmSignOut,
+                    PressableScale(
+                      onTap: _confirmSignOut,
+                      child: IconButton(
+                        icon: Icon(Icons.logout, color: colorScheme.onSurface),
+                        onPressed: _confirmSignOut,
+                      ),
                     ),
                 ],
               ),
@@ -174,7 +187,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 28),
             if (widget.isOwnProfile)
-              GestureDetector(
+              PressableScale(
                 onTap: _editName,
                 child: Container(
                   padding: const EdgeInsets.symmetric(

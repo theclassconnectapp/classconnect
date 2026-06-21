@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/animation/motion.dart';
 import '../../domain/entities/user_role.dart';
 import '../../domain/usecases/verify_role_code.dart';
 import '../cubit/role_code_cubit.dart';
@@ -80,9 +81,12 @@ class _RoleCodeContentState extends State<_RoleCodeContent> {
         return Scaffold(
           appBar: AppBar(
             title: const Text('Enter access code'),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: widget.onBack,
+            leading: PressableScale(
+              onTap: widget.onBack,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: widget.onBack,
+              ),
             ),
           ),
           body: Padding(
@@ -113,14 +117,27 @@ class _RoleCodeContentState extends State<_RoleCodeContent> {
                   decoration: InputDecoration(
                     labelText: 'Access code',
                     border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscure ? Icons.visibility_off : Icons.visibility,
-                      ),
-                      onPressed: loading
-                          ? null
-                          : () => setState(() => _obscure = !_obscure),
-                    ),
+                    suffixIcon: loading
+                        ? IconButton(
+                            icon: Icon(
+                              _obscure
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            onPressed: null,
+                          )
+                        : PressableScale(
+                            onTap: () => setState(() => _obscure = !_obscure),
+                            child: IconButton(
+                              icon: Icon(
+                                _obscure
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                              ),
+                              onPressed: () =>
+                                  setState(() => _obscure = !_obscure),
+                            ),
+                          ),
                   ),
                   onSubmitted: loading ? null : (_) => _submit(),
                 ),

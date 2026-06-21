@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../../../core/animation/motion.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../ai/domain/repositories/ai_repository.dart';
 import '../../../ai/presentation/screens/ai_chat_screen.dart';
@@ -180,7 +181,20 @@ class _AdvisorHomeScreenState extends State<AdvisorHomeScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: IndexedStack(index: _selectedIndex, children: tabs),
+      body: Stack(
+        children: List<Widget>.generate(tabs.length, (i) {
+          final bool active = i == _selectedIndex;
+          return AnimatedOpacity(
+            opacity: active ? 1.0 : 0.0,
+            duration: Motion.tabSwitch,
+            curve: Motion.standard,
+            child: IgnorePointer(
+              ignoring: !active,
+              child: tabs[i],
+            ),
+          );
+        }),
+      ),
       bottomNavigationBar: Container(
         color: colorScheme.primary,
         child: Row(

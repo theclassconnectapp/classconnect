@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/animation/motion.dart';
 import '../../../college/domain/entities/batch.dart';
 import '../../../college/domain/entities/department.dart';
 import '../../../college/domain/entities/user_scope.dart';
@@ -273,9 +274,12 @@ class _ProfileSetupContentState extends State<_ProfileSetupContent> {
         return Scaffold(
           appBar: AppBar(
             title: Text('${widget.role.label} Setup'),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: widget.onBack,
+            leading: PressableScale(
+              onTap: widget.onBack,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: widget.onBack,
+              ),
             ),
           ),
           body: Padding(

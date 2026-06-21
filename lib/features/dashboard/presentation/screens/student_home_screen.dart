@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/animation/motion.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../ai/domain/repositories/ai_repository.dart';
 import '../../../ai/presentation/screens/ai_chat_screen.dart';
@@ -268,8 +269,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           final bool isActive = _selectedIndex == i;
           return AnimatedOpacity(
             opacity: isActive ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeInOut,
+            duration: Motion.tabSwitch,
+            curve: Motion.standard,
             child: IgnorePointer(ignoring: !isActive, child: tabs[i]),
           );
         }),
