@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -649,12 +650,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       case MessageType.image:
         return ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Image.network(
-            m.fileUrl ?? '',
+          child: CachedNetworkImage(
+            imageUrl: m.fileUrl ?? '',
             width: 220,
             height: 160,
             fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => Container(
+            errorWidget: (_, _, _) => Container(
               width: 220,
               height: 160,
               color: colorScheme.surfaceContainerHighest,

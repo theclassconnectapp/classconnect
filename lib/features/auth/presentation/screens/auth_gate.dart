@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -312,8 +313,9 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.network(
-              'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+            CachedNetworkImage(
+              imageUrl:
+                  'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
               height: 22,
               width: 22,
             ),

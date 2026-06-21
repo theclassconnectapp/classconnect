@@ -8,6 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
+import '../../../../core/constants/firestore_keys.dart';
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/domain/entities/user_role.dart';
 import '../../../college/domain/entities/user_scope.dart';
@@ -42,8 +43,10 @@ class GroupRepositoryImpl implements GroupRepository {
   final FirebaseFirestore _firestore;
   final FirebaseStorage _storage;
 
-  CollectionReference<Map<String, dynamic>> get _groups =>
-      _firestore.collection('colleges').doc(collegeId).collection('groups');
+  CollectionReference<Map<String, dynamic>> get _groups => _firestore
+      .collection(FirestoreCollections.colleges)
+      .doc(collegeId)
+      .collection(FirestoreCollections.groups);
 
   DocumentReference<Map<String, dynamic>> _groupRef(String groupId) =>
       _groups.doc(groupId);
@@ -104,10 +107,10 @@ class GroupRepositoryImpl implements GroupRepository {
   }) async {
     final DocumentReference<Map<String, dynamic>> group = _groupRef(groupId);
     final DocumentReference<Map<String, dynamic>> member = group
-        .collection('members')
+        .collection(FirestoreCollections.members)
         .doc(user.uid);
     final DocumentReference<Map<String, dynamic>> state = group
-        .collection('states')
+        .collection(FirestoreCollections.states)
         .doc(user.uid);
     await _firestore.runTransaction((Transaction txn) async {
       txn.set(member, <String, dynamic>{
@@ -129,22 +132,24 @@ class GroupRepositoryImpl implements GroupRepository {
     final DocumentSnapshot<Map<String, dynamic>> groupSnap = await group.get();
     final String type = (groupSnap.data()?['type'] as String?) ?? '';
     if (type == GroupType.subject.id) {
-      await group.collection('messages').add(<String, dynamic>{
-        'uid': 'system',
-        'senderName': 'system',
-        'senderPhoto': null,
-        'type': 'system',
-        'content': '${user.name} joined the group',
-        'fileUrl': null,
-        'fileName': null,
-        'fileType': null,
-        'fileSize': null,
-        'isDeleted': false,
-        'timestamp': FieldValue.serverTimestamp(),
-        'reactions': <String, dynamic>{},
-        'replyTo': null,
-        'isForwarded': false,
-      });
+      await group
+          .collection(FirestoreCollections.messages)
+          .add(<String, dynamic>{
+            'uid': 'system',
+            'senderName': 'system',
+            'senderPhoto': null,
+            'type': 'system',
+            'content': '${user.name} joined the group',
+            'fileUrl': null,
+            'fileName': null,
+            'fileType': null,
+            'fileSize': null,
+            'isDeleted': false,
+            'timestamp': FieldValue.serverTimestamp(),
+            'reactions': <String, dynamic>{},
+            'replyTo': null,
+            'isForwarded': false,
+          });
       await group.set(<String, dynamic>{
         'lastMessageText': '${user.name} joined the group',
         'lastMessageTime': FieldValue.serverTimestamp(),
@@ -158,8 +163,8 @@ class GroupRepositoryImpl implements GroupRepository {
     required String memberUid,
   }) async {
     final DocumentReference<Map<String, dynamic>> ref = _groupRef(groupId);
-    await ref.collection('members').doc(memberUid).delete();
-    await ref.collection('states').doc(memberUid).delete();
+    await ref.collection(FirestoreCollections.members).doc(memberUid).delete();
+    await ref.collection(FirestoreCollections.states).doc(memberUid).delete();
     await ref.set(<String, dynamic>{
       'memberIds': FieldValue.arrayRemove(<String>[memberUid]),
     }, SetOptions(merge: true));
@@ -224,10 +229,10 @@ class GroupRepositoryImpl implements GroupRepository {
   }) async {
     final DocumentReference<Map<String, dynamic>> group = _groups.doc();
     final DocumentReference<Map<String, dynamic>> member = group
-        .collection('members')
+        .collection(FirestoreCollections.members)
         .doc(createdByUid);
     final DocumentReference<Map<String, dynamic>> state = group
-        .collection('states')
+        .collection(FirestoreCollections.states)
         .doc(createdByUid);
     final WriteBatch batchWrite = _firestore.batch();
     batchWrite.set(group, <String, dynamic>{
@@ -275,6 +280,8 @@ class GroupRepositoryImpl implements GroupRepository {
         return _groups
             .where('dept', isEqualTo: user.dept)
             .where('batch', isEqualTo: user.batch)
+            // TODO: implement pagination - limited to 50 for now
+            .limit(50)
             .snapshots();
       case UserRole.subjectTeacher:
         return _streamGroupsForStaffScopes(user.staffScopes);
@@ -290,9 +297,17 @@ class GroupRepositoryImpl implements GroupRepository {
 
     final List<Filter> filters = scopes.take(30).map(_filterForScope).toList();
     if (filters.length == 1) {
-      return _groups.where(filters.first).snapshots();
+      return _groups
+          .where(filters.first)
+          // TODO: implement pagination - limited to 50 for now
+          .limit(50)
+          .snapshots();
     }
-    return _groups.where(_orFilters(filters)).snapshots();
+    return _groups
+        .where(_orFilters(filters))
+        // TODO: implement pagination - limited to 50 for now
+        .limit(50)
+        .snapshots();
   }
 
   Filter _filterForScope(UserScope scope) {
@@ -322,28 +337,40 @@ class GroupRepositoryImpl implements GroupRepository {
     final Query<Map<String, dynamic>> q = _groups
         .where('dept', isEqualTo: dept)
         .where('batch', isEqualTo: batch);
-    return q.snapshots();
+    return q
+        // TODO: implement pagination - limited to 50 for now
+        .limit(50)
+        .snapshots();
   }
 
   @override
   Stream<QuerySnapshot<Map<String, dynamic>>> streamMembers(String groupId) {
-    return _groupRef(
-      groupId,
-    ).collection('members').orderBy('joinedAt', descending: true).snapshots();
+    return _groupRef(groupId)
+        .collection(FirestoreCollections.members)
+        .orderBy('joinedAt', descending: true)
+        // TODO: implement pagination - limited to 50 for now
+        .limit(50)
+        .snapshots();
   }
 
   @override
   Stream<QuerySnapshot<Map<String, dynamic>>> streamMessages(String groupId) {
-    return _groupRef(
-      groupId,
-    ).collection('messages').orderBy('timestamp').snapshots();
+    return _groupRef(groupId)
+        .collection(FirestoreCollections.messages)
+        .orderBy('timestamp')
+        // TODO: implement pagination - limited to 50 for now
+        .limitToLast(50)
+        .snapshots();
   }
 
   @override
   Stream<QuerySnapshot<Map<String, dynamic>>> streamFiles(String groupId) {
-    return _groupRef(
-      groupId,
-    ).collection('files').orderBy('uploadedAt', descending: true).snapshots();
+    return _groupRef(groupId)
+        .collection(FirestoreCollections.files)
+        .orderBy('uploadedAt', descending: true)
+        // TODO: implement pagination - limited to 50 for now
+        .limit(50)
+        .snapshots();
   }
 
   @override
@@ -358,7 +385,9 @@ class GroupRepositoryImpl implements GroupRepository {
       final String clean = text.trim();
       final bool isLink =
           clean.startsWith('http://') || clean.startsWith('https://');
-      await _groupRef(groupId).collection('messages').add(<String, dynamic>{
+      await _groupRef(
+        groupId,
+      ).collection(FirestoreCollections.messages).add(<String, dynamic>{
         'uid': sender.uid,
         'senderName': sender.name,
         'senderPhoto': sender.photoUrl,
@@ -456,10 +485,10 @@ class GroupRepositoryImpl implements GroupRepository {
       final WriteBatch write = _firestore.batch();
       final DocumentReference<Map<String, dynamic>> msgRef = _groupRef(
         groupId,
-      ).collection('messages').doc();
+      ).collection(FirestoreCollections.messages).doc();
       final DocumentReference<Map<String, dynamic>> fileRef = _groupRef(
         groupId,
-      ).collection('files').doc();
+      ).collection(FirestoreCollections.files).doc();
       write.set(msgRef, <String, dynamic>{
         'uid': sender.uid,
         'senderName': sender.name,
@@ -500,10 +529,12 @@ class GroupRepositoryImpl implements GroupRepository {
     required String groupId,
     required String uid,
   }) async {
-    await _groupRef(groupId).collection('states').doc(uid).set(
-      <String, dynamic>{'uid': uid, 'lastSeenAt': FieldValue.serverTimestamp()},
-      SetOptions(merge: true),
-    );
+    await _groupRef(
+      groupId,
+    ).collection(FirestoreCollections.states).doc(uid).set(<String, dynamic>{
+      'uid': uid,
+      'lastSeenAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   @override
@@ -513,11 +544,11 @@ class GroupRepositoryImpl implements GroupRepository {
   }) async {
     final DocumentSnapshot<Map<String, dynamic>> state = await _groupRef(
       groupId,
-    ).collection('states').doc(uid).get();
+    ).collection(FirestoreCollections.states).doc(uid).get();
     final Timestamp? seen = state.data()?['lastSeenAt'] as Timestamp?;
     Query<Map<String, dynamic>> q = _groupRef(
       groupId,
-    ).collection('messages').where('uid', isNotEqualTo: uid);
+    ).collection(FirestoreCollections.messages).where('uid', isNotEqualTo: uid);
     if (seen != null) {
       q = q.where('timestamp', isGreaterThan: seen);
     }
@@ -533,7 +564,9 @@ class GroupRepositoryImpl implements GroupRepository {
     required String reaction,
   }) async {
     try {
-      await _groupRef(groupId).collection('messages').doc(messageId).set(
+      await _groupRef(
+        groupId,
+      ).collection(FirestoreCollections.messages).doc(messageId).set(
         <String, dynamic>{'reactions.$uid': reaction},
         SetOptions(merge: true),
       );
@@ -551,7 +584,7 @@ class GroupRepositoryImpl implements GroupRepository {
   }) async {
     final DocumentSnapshot<Map<String, dynamic>> source = await _groupRef(
       sourceGroupId,
-    ).collection('messages').doc(messageId).get();
+    ).collection(FirestoreCollections.messages).doc(messageId).get();
     if (!source.exists) return;
     final Map<String, dynamic> data = source.data() ?? <String, dynamic>{};
     final String typeId = data['type'] as String? ?? MessageType.text.id;
@@ -565,7 +598,9 @@ class GroupRepositoryImpl implements GroupRepository {
       );
       return;
     }
-    await _groupRef(targetGroupId).collection('messages').add(<String, dynamic>{
+    await _groupRef(
+      targetGroupId,
+    ).collection(FirestoreCollections.messages).add(<String, dynamic>{
       'uid': sender.uid,
       'senderName': sender.name,
       'senderPhoto': sender.photoUrl,
@@ -594,13 +629,14 @@ class GroupRepositoryImpl implements GroupRepository {
     required String deletedByUid,
   }) async {
     try {
-      await _groupRef(
-        groupId,
-      ).collection('messages').doc(messageId).set(<String, dynamic>{
-        'isDeleted': true,
-        'deletedByUid': deletedByUid,
-        'deletedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      await _groupRef(groupId)
+          .collection(FirestoreCollections.messages)
+          .doc(messageId)
+          .set(<String, dynamic>{
+            'isDeleted': true,
+            'deletedByUid': deletedByUid,
+            'deletedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
     } catch (e) {
       throw Exception('Failed to delete message: $e');
     }
@@ -706,6 +742,8 @@ class GroupRepositoryImpl implements GroupRepository {
     required String groupId,
     required String fileId,
   }) async {
-    await _groupRef(groupId).collection('files').doc(fileId).delete();
+    await _groupRef(
+      groupId,
+    ).collection(FirestoreCollections.files).doc(fileId).delete();
   }
 }

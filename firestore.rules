@@ -1,32 +1,72 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function hasCollegeClaim(collegeId) {
+      return signedIn() && request.auth.token.collegeId == collegeId;
+    }
+
+    function resourceHasCollegeId(collegeId) {
+      return signedIn() && resource.data.collegeId == collegeId;
+    }
+
+    function requestHasCollegeId(collegeId) {
+      return signedIn() && request.resource.data.collegeId == collegeId;
+    }
+
+    function groupPath(collegeId, groupId) {
+      return /databases/$(database)/documents/colleges/$(collegeId)/groups/$(groupId);
+    }
+
+    function groupHasCollegeId(collegeId, groupId) {
+      return signedIn()
+        && exists(groupPath(collegeId, groupId))
+        && get(groupPath(collegeId, groupId)).data.collegeId == collegeId;
+    }
+
+    function canReadCollegeResource(collegeId) {
+      return hasCollegeClaim(collegeId) || resourceHasCollegeId(collegeId);
+    }
+
+    function canWriteCollegeResource(collegeId) {
+      return hasCollegeClaim(collegeId) || requestHasCollegeId(collegeId);
+    }
+
+    function canAccessGroupScope(collegeId, groupId) {
+      return hasCollegeClaim(collegeId) || groupHasCollegeId(collegeId, groupId);
+    }
+
+    function isGroupMember(collegeId, groupId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/colleges/$(collegeId)/groups/$(groupId)/members/$(request.auth.uid));
+    }
+
     match /colleges/{collegeId} {
-      allow read: if request.auth != null;
+      allow read: if signedIn();
       allow write: if false;
 
       match /users/{uid} {
-        allow read, write: if request.auth != null && request.auth.uid == uid;
+        allow read: if signedIn()
+          && request.auth.uid == uid
+          && (hasCollegeClaim(collegeId) || resourceHasCollegeId(collegeId));
+        allow write: if signedIn()
+          && request.auth.uid == uid
+          && (hasCollegeClaim(collegeId) || requestHasCollegeId(collegeId));
       }
 
       match /groups/{groupId} {
-        // Anyone signed in can read and create groups.
-        allow read: if request.auth != null;
-        allow create: if request.auth != null;
-
-        // Updates: allowed for any signed-in user, but core identity
-        // fields cannot be changed via update (only set at creation time).
-        allow update: if request.auth != null
+        allow read: if canReadCollegeResource(collegeId);
+        allow create: if canWriteCollegeResource(collegeId);
+        allow update: if canWriteCollegeResource(collegeId)
           && request.resource.data.isGeneral == resource.data.isGeneral
           && request.resource.data.dept == resource.data.dept
           && request.resource.data.batch == resource.data.batch
           && request.resource.data.departmentId == resource.data.departmentId
           && request.resource.data.batchId == resource.data.batchId;
-
-        // Deletes: NEVER allowed on General groups, regardless of role.
-        // Subject groups can only be deleted by their creator, or by an
-        // HOD/advisor (checked via their own user document's role field).
-        allow delete: if request.auth != null
+        allow delete: if canAccessGroupScope(collegeId, groupId)
           && resource.data.isGeneral != true
           && (
             resource.data.createdByUid == request.auth.uid
@@ -34,16 +74,23 @@ service cloud.firestore {
           );
 
         match /members/{memberUid} {
-          allow read, write: if request.auth != null;
+          allow read, write: if canAccessGroupScope(collegeId, groupId)
+            && isGroupMember(collegeId, groupId);
         }
+
         match /messages/{messageId} {
-          allow read, write: if request.auth != null;
+          allow read, write: if signedIn()
+            && canAccessGroupScope(collegeId, groupId);
         }
+
         match /files/{fileId} {
-          allow read, write: if request.auth != null;
+          allow read, write: if signedIn()
+            && canAccessGroupScope(collegeId, groupId);
         }
+
         match /states/{uid} {
-          allow read, write: if request.auth != null;
+          allow read, write: if signedIn()
+            && request.auth.uid == uid;
         }
       }
     }

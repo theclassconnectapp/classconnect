@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../features/auth/domain/entities/app_user.dart';
@@ -228,12 +229,12 @@ class _InAppNotificationBannerState extends State<InAppNotificationBanner>
                           children: [
                             ClipOval(
                               child: avatarUrl != null && avatarUrl.isNotEmpty
-                                  ? Image.network(
-                                      avatarUrl,
+                                  ? CachedNetworkImage(
+                                      imageUrl: avatarUrl,
                                       width: 42,
                                       height: 42,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (_, _, _) =>
+                                      errorWidget: (_, _, _) =>
                                           _fallbackAvatar(colorScheme),
                                     )
                                   : _fallbackAvatar(colorScheme),

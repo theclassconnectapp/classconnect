@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../../../core/constants/firestore_keys.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/repositories/user_repository.dart';
 
@@ -11,8 +12,10 @@ class UserRepositoryImpl implements UserRepository {
   final String collegeId;
   final FirebaseFirestore _firestore;
 
-  CollectionReference<Map<String, dynamic>> get _users =>
-      _firestore.collection('colleges').doc(collegeId).collection('users');
+  CollectionReference<Map<String, dynamic>> get _users => _firestore
+      .collection(FirestoreCollections.colleges)
+      .doc(collegeId)
+      .collection(FirestoreCollections.users);
 
   @override
   Future<AppUser?> getUser(String uid) async {

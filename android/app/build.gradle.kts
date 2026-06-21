@@ -17,6 +17,10 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+fun requireKeystoreProperty(name: String): String =
+    keystoreProperties.getProperty(name)
+        ?: error("Missing '$name' in android/key.properties")
+
 android {
     namespace = "com.theclassconnect.app"
     compileSdk = flutter.compileSdkVersion
@@ -45,16 +49,19 @@ android {
 
     signingConfigs {
         create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
-            storeFile = keystoreProperties["storeFile"]?.let { file(it) }
-            storePassword = keystoreProperties["storePassword"] as String
+            keyAlias = requireKeystoreProperty("keyAlias")
+            keyPassword = requireKeystoreProperty("keyPassword")
+            storeFile = file(requireKeystoreProperty("storeFile"))
+            storePassword = requireKeystoreProperty("storePassword")
         }
     }
 
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
         }
     }
 }
