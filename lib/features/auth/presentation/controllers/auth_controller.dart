@@ -146,6 +146,14 @@ class AuthCubit extends Cubit<AuthState> {
     emit(AuthAuthenticated(user, isNewUser: true));
   }
 
+  void updateCurrentUser(AppUser updatedUser) {
+    final AuthState current = state;
+    if (current is AuthAuthenticated) {
+      _pendingUser = updatedUser;
+      emit(AuthAuthenticated(updatedUser, isNewUser: false));
+    }
+  }
+
   void welcomeSeen() {
     final current = state;
     if (current is AuthAuthenticated) {
