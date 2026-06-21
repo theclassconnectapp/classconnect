@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/di/injection_container.dart';
 import '../../../../core/presentation/controllers/theme_cubit.dart';
 
+import '../../../auth/domain/entities/app_user.dart';
+import '../../../auth/domain/entities/user_role.dart';
+import '../../../auth/domain/repositories/user_repository.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../college/domain/entities/user_scope.dart';
+import '../../../college/domain/repositories/college_repository.dart';
+import '../../../college/presentation/screens/staff_scope_picker_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -13,6 +20,44 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  Future<void> _openStaffScopePicker(
+    BuildContext context,
+    AppUser user,
+  ) async {
+    final bool? saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (BuildContext context) => StaffScopePickerScreen(
+          user: user,
+          collegeRepository: sl<CollegeRepository>(),
+        ),
+      ),
+    );
+
+    if (saved == true && context.mounted) {
+      try {
+        final List<UserScope> freshScopes = await sl<CollegeRepository>()
+            .getMyScopes(role: user.role);
+        final AppUser updatedUser = user.copyWith(staffScopes: freshScopes);
+        // Persist to Firestore so it survives app restart, same as profile setup.
+        await sl<UserRepository>().saveUser(updatedUser);
+        if (context.mounted) {
+          context.read<AuthCubit>().updateCurrentUser(updatedUser);
+        }
+      } catch (_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Saved, but could not refresh your scopes. Pull to '
+                'refresh on Home if folders don\'t appear.',
+              ),
+            ),
+          );
+        }
+      }
+    }
+  }
+
   Future<void> _showComingSoon() async {
     if (!mounted) return;
     ScaffoldMessenger.of(
@@ -182,6 +227,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final ThemeMode currentThemeMode = context.watch<ThemeCubit>().state;
+    final AppUser? currentUser = context.watch<AuthCubit>().currentUser;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -257,6 +303,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             ),
+            if (currentUser?.role == UserRole.subjectTeacher)
+              _buildSection(
+                header: 'Teaching',
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.school_outlined),
+                    title: const Text('Manage Departments & Batches'),
+                    subtitle: const Text('Choose what you teach'),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () => _openStaffScopePicker(context, currentUser!),
+                  ),
+                ],
+              ),
             _buildSection(
               header: 'General',
               children: [
