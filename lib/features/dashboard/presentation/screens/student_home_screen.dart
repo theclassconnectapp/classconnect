@@ -349,7 +349,9 @@ class _NavItem extends StatelessWidget {
                 duration: const Duration(milliseconds: 220),
                 style: TextStyle(
                   fontSize: 11,
-                  color: selected ? colorScheme.primary : colorScheme.onPrimary,
+                  color: selected
+                      ? colorScheme.onPrimary
+                      : colorScheme.onSurface,
                 ),
                 child: Text(label),
               ),
