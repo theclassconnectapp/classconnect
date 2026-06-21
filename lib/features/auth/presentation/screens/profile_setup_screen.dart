@@ -75,9 +75,7 @@ class _ProfileSetupContentState extends State<_ProfileSetupContent> {
   bool _saving = false;
 
   bool get _needsDepartment {
-    return widget.role == UserRole.student ||
-        widget.role == UserRole.advisor ||
-        widget.role == UserRole.hod;
+    return widget.role == UserRole.student || widget.role == UserRole.advisor;
   }
 
   bool get _needsBatch {
@@ -88,7 +86,7 @@ class _ProfileSetupContentState extends State<_ProfileSetupContent> {
   void initState() {
     super.initState();
     // TODO(post-launch): receive collegeId from auth flow once multi-college onboarding exists
-    if (widget.role != UserRole.subjectTeacher) {
+    if (_needsDepartment) {
       context.read<CollegeCubit>().loadDepartments(_collegeId);
     }
   }
@@ -100,7 +98,7 @@ class _ProfileSetupContentState extends State<_ProfileSetupContent> {
       case UserRole.advisor:
         return 'Select department and batch you manage.';
       case UserRole.hod:
-        return 'Select your department.';
+        return 'Select the departments you head.';
       case UserRole.subjectTeacher:
         return 'Select the departments and batches you teach.';
     }
@@ -277,6 +275,7 @@ class _ProfileSetupContentState extends State<_ProfileSetupContent> {
         batch: _selectedBatch?.label,
         collegeId:
             widget.role == UserRole.subjectTeacher ||
+                widget.role == UserRole.hod ||
                 _selectedDepartment != null
             ? _collegeId
             : null,
@@ -356,12 +355,17 @@ class _ProfileSetupContentState extends State<_ProfileSetupContent> {
                       color: Theme.of(context).colorScheme.error,
                     ),
                   ),
-                if (widget.role == UserRole.subjectTeacher) ...<Widget>[
+                if (widget.role == UserRole.subjectTeacher ||
+                    widget.role == UserRole.hod) ...<Widget>[
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
                       onPressed: _saving ? null : _openStaffScopePicker,
-                      child: const Text('Select Departments & Batches'),
+                      child: Text(
+                        widget.role == UserRole.hod
+                            ? 'Select Departments'
+                            : 'Select Departments & Batches',
+                      ),
                     ),
                   ),
                   const Spacer(),
