@@ -1,7 +1,9 @@
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../auth/domain/entities/user_role.dart';
 import '../../domain/entities/batch.dart';
 import '../../domain/entities/department.dart';
+import '../../domain/entities/user_scope.dart';
 import '../../domain/repositories/college_repository.dart';
 import '../models/batch_model.dart';
 import '../models/department_model.dart';
@@ -35,6 +37,18 @@ class CollegeRepositoryImpl implements CollegeRepository {
       return _readList(
         response,
       ).map(BatchModel.fromJson).toList(growable: false);
+    } on ApiException {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<UserScope>> getMyScopes({required UserRole role}) async {
+    try {
+      final Object? response = await _apiClient.get('/api/v1/scopes/me');
+      return _readScopes(response)
+          .map((Map<String, Object?> json) => _userScopeFromJson(json, role))
+          .toList(growable: false);
     } on ApiException {
       rethrow;
     }
@@ -84,6 +98,15 @@ class CollegeRepositoryImpl implements CollegeRepository {
     }
   }
 
+  @override
+  Future<void> removeStaffScope(String scopeId) async {
+    try {
+      await _apiClient.delete('/api/v1/scopes/${Uri.encodeComponent(scopeId)}');
+    } on ApiException {
+      rethrow;
+    }
+  }
+
   List<Map<String, Object?>> _readList(Object? response) {
     final Object? payload = response is Map<String, Object?>
         ? response['data'] ?? response['items']
@@ -96,5 +119,50 @@ class CollegeRepositoryImpl implements CollegeRepository {
       code: 'invalid_response',
       message: 'Backend returned an unexpected response.',
     );
+  }
+
+  List<Map<String, Object?>> _readScopes(Object? response) {
+    final Object? payload = response is Map<String, Object?>
+        ? response['scopes']
+        : null;
+    if (payload is List<Object?>) {
+      return payload.whereType<Map<String, Object?>>().toList(growable: false);
+    }
+    throw const ApiException(
+      statusCode: 0,
+      code: 'invalid_response',
+      message: 'Backend returned an unexpected response.',
+    );
+  }
+
+  UserScope _userScopeFromJson(Map<String, Object?> json, UserRole role) {
+    return UserScope(
+      id: json['id'] as String?,
+      collegeId: _readString(json, 'collegeId', 'college_id'),
+      departmentId: _readString(json, 'departmentId', 'department_id'),
+      batchId: _readNullableString(json, 'batchId', 'batch_id'),
+      role: role,
+    );
+  }
+
+  String _readString(Map<String, Object?> json, String key, [String? altKey]) {
+    final Object? value = json[key] ?? (altKey == null ? null : json[altKey]);
+    if (value is String) {
+      return value;
+    }
+    throw const ApiException(
+      statusCode: 0,
+      code: 'invalid_response',
+      message: 'Backend returned an unexpected response.',
+    );
+  }
+
+  String? _readNullableString(
+    Map<String, Object?> json,
+    String key, [
+    String? altKey,
+  ]) {
+    final Object? value = json[key] ?? (altKey == null ? null : json[altKey]);
+    return value is String ? value : null;
   }
 }

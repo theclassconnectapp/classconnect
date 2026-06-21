@@ -5,9 +5,11 @@ class UserScope {
     required this.collegeId,
     required this.departmentId,
     required this.role,
+    this.id,
     this.batchId,
   });
 
+  final String? id;
   final String collegeId;
   final String departmentId;
   final String? batchId;

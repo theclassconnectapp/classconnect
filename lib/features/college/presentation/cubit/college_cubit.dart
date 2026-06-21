@@ -1,8 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../../auth/domain/entities/user_role.dart';
 import '../../domain/entities/batch.dart';
 import '../../domain/entities/department.dart';
+import '../../domain/entities/user_scope.dart';
 import '../../domain/repositories/college_repository.dart';
 import 'college_state.dart';
 
@@ -42,6 +44,10 @@ class CollegeCubit extends Cubit<CollegeState> {
     }
   }
 
+  Future<List<UserScope>> loadMyScopes({required UserRole role}) async {
+    return _collegeRepository.getMyScopes(role: role);
+  }
+
   Future<void> assignStudentScope({
     required String uid,
     required String collegeId,
@@ -78,6 +84,18 @@ class CollegeCubit extends Cubit<CollegeState> {
         departmentId: departmentId,
         batchId: batchId,
       );
+      emit(const CollegeScopeAssigned());
+    } on ApiException catch (error) {
+      emit(CollegeError(error.message));
+    } catch (_) {
+      emit(const CollegeError('Something went wrong. Please try again.'));
+    }
+  }
+
+  Future<void> removeScope(String scopeId) async {
+    emit(const CollegeLoading());
+    try {
+      await _collegeRepository.removeStaffScope(scopeId);
       emit(const CollegeScopeAssigned());
     } on ApiException catch (error) {
       emit(CollegeError(error.message));

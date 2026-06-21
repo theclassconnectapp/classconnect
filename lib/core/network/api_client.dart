@@ -22,6 +22,14 @@ class ApiClient {
     return _handleResponse(response);
   }
 
+  Future<Object?> delete(String path) async {
+    final http.Response response = await _httpClient.delete(
+      _buildUri(path),
+      headers: await _buildHeaders(),
+    );
+    return _handleResponse(response);
+  }
+
   Future<Object?> post(
     String path, {
     Map<String, Object?> body = const <String, Object?>{},
