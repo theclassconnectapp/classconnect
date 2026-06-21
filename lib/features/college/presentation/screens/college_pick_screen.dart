@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/services/local_storage_service.dart';
@@ -41,6 +42,24 @@ class _CollegePickScreenState extends State<CollegePickScreen> {
   }
 
   Future<void> _select(College college) async {
+    if (college.allowedEmailDomain != null) {
+      final String? userEmail = FirebaseAuth.instance.currentUser?.email;
+      final String domain = college.allowedEmailDomain!.toLowerCase();
+      if (userEmail == null ||
+          !userEmail.toLowerCase().endsWith('@$domain')) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'This college requires an email ending in @$domain. '
+                'Please sign in with your institutional account.',
+              ),
+            ),
+          );
+        }
+        return;
+      }
+    }
     await LocalStorageService().saveCollegeId(college.id);
     if (!mounted) return;
     widget.onPicked(college.id);
