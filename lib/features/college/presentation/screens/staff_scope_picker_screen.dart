@@ -95,7 +95,7 @@ class _StaffScopePickerContentState extends State<_StaffScopePickerContent> {
       final List<Object?> results =
           await Future.wait<Object?>(<Future<Object?>>[
             cubit.loadDepartments(collegeId).then((_) => null),
-            cubit.loadMyScopes(role: UserRole.subjectTeacher),
+            cubit.loadMyScopes(role: widget.user.role),
           ]);
 
       if (!mounted) {
@@ -160,6 +160,8 @@ class _StaffScopePickerContentState extends State<_StaffScopePickerContent> {
       _selectedDeptIds.add(scope.departmentId);
 
       if (scope.batchId == null) {
+        // HOD scopes are saved as whole-department rows, so loading them keeps
+        // the department in all-batches mode with no batch selections.
         _allBatchesForDept[scope.departmentId] = true;
         _selectedBatchIds.remove(scope.departmentId);
       } else if (_allBatchesForDept[scope.departmentId] != true) {
@@ -257,6 +259,8 @@ class _StaffScopePickerContentState extends State<_StaffScopePickerContent> {
     final Set<_ScopeKey> keys = <_ScopeKey>{};
     for (final String departmentId in _selectedDeptIds) {
       if (_allBatchesForDept[departmentId] ?? true) {
+        // For HOD, batch-mode UI is hidden, so this remains true by default
+        // and emits a whole-department scope with no batchId.
         keys.add(_ScopeKey(departmentId: departmentId));
         continue;
       }
@@ -305,7 +309,7 @@ class _StaffScopePickerContentState extends State<_StaffScopePickerContent> {
     setState(() => _saving = true);
     try {
       final List<UserScope> freshScopes = await widget.collegeRepository
-          .getMyScopes(role: UserRole.subjectTeacher);
+          .getMyScopes(role: widget.user.role);
       _originalScopes = List<UserScope>.unmodifiable(freshScopes);
     } on ApiException catch (error) {
       if (!mounted) {
@@ -467,7 +471,7 @@ class _StaffScopePickerContentState extends State<_StaffScopePickerContent> {
             subtitle: department.code.isEmpty ? null : Text(department.code),
             controlAffinity: ListTileControlAffinity.leading,
           ),
-          if (selected)
+          if (selected && widget.user.role != UserRole.hod)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Column(

@@ -20,10 +20,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  Future<void> _openStaffScopePicker(
-    BuildContext context,
-    AppUser user,
-  ) async {
+  Future<void> _openStaffScopePicker(BuildContext context, AppUser user) async {
     final bool? saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
         builder: (BuildContext context) => StaffScopePickerScreen(
@@ -303,14 +300,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             ),
-            if (currentUser?.role == UserRole.subjectTeacher)
+            if (currentUser?.role == UserRole.subjectTeacher ||
+                currentUser?.role == UserRole.hod)
               _buildSection(
-                header: 'Teaching',
+                header: currentUser?.role == UserRole.hod
+                    ? 'Department'
+                    : 'Teaching',
                 children: [
                   ListTile(
                     leading: const Icon(Icons.school_outlined),
-                    title: const Text('Manage Departments & Batches'),
-                    subtitle: const Text('Choose what you teach'),
+                    title: Text(
+                      currentUser?.role == UserRole.hod
+                          ? 'Manage Departments'
+                          : 'Manage Departments & Batches',
+                    ),
+                    subtitle: Text(
+                      currentUser?.role == UserRole.hod
+                          ? 'Choose which departments you head'
+                          : 'Choose what you teach',
+                    ),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () => _openStaffScopePicker(context, currentUser!),
                   ),
