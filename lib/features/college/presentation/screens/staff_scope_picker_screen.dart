@@ -118,6 +118,16 @@ class _StaffScopePickerContentState extends State<_StaffScopePickerContent> {
         _applyOriginalScopes(scopes);
         _initializing = false;
       });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) {
+          return;
+        }
+        for (final String deptId in _selectedDeptIds) {
+          if (_allBatchesForDept[deptId] == false) {
+            _ensureBatchesLoaded(deptId);
+          }
+        }
+      });
     } on ApiException catch (error) {
       if (!mounted) {
         return;
@@ -525,7 +535,6 @@ class _StaffScopePickerContentState extends State<_StaffScopePickerContent> {
 
     final List<Batch>? batches = _batchesByDept[departmentId];
     if (batches == null) {
-      _ensureBatchesLoaded(departmentId);
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 12),
         child: Center(child: CircularProgressIndicator()),
