@@ -94,45 +94,50 @@ class _CollegePickScreenState extends State<CollegePickScreen> {
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 24),
-              Text(
-                'Select your college',
-                style: TextStyle(
-                  color: colorScheme.onSurface,
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Your data is scoped to your institution.',
-                style: TextStyle(
-                  color: colorScheme.onSurface.withValues(alpha: 0.70),
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 32),
-              if (_loading)
-                Center(
-                  child: CircularProgressIndicator(color: colorScheme.primary),
-                )
-              else if (_error != null)
-                Center(
-                  child: Text(
-                    _error!,
-                    style: TextStyle(color: colorScheme.error),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 24),
+                Text(
+                  'Select your college',
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
                   ),
-                )
-              else
-                Expanded(
-                  child: ListView.separated(
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Your data is scoped to your institution.',
+                  style: TextStyle(
+                    color: colorScheme.onSurface.withValues(alpha: 0.70),
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                if (_loading)
+                  Center(
+                    child: CircularProgressIndicator(
+                      color: colorScheme.primary,
+                    ),
+                  )
+                else if (_error != null)
+                  Center(
+                    child: Text(
+                      _error!,
+                      style: TextStyle(color: colorScheme.error),
+                    ),
+                  )
+                else
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: _colleges.length,
                     separatorBuilder: (context, index) =>
                         const SizedBox(height: 12),
@@ -144,8 +149,8 @@ class _CollegePickScreenState extends State<CollegePickScreen> {
                       );
                     },
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
