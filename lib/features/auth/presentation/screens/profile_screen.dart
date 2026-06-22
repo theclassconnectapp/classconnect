@@ -50,7 +50,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: const Text('Save'),
+            child: const Text('Save Changes'),
           ),
         ],
       ),
@@ -123,7 +123,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     'Class Connect',
                     style: TextStyle(
                       color: colorScheme.onSurface,
-                      fontSize: 20,
+                      fontSize: 26,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -139,7 +139,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 35, vertical: 10),
               decoration: BoxDecoration(
                 color: colorScheme.surface,
                 borderRadius: BorderRadius.circular(30),
@@ -153,13 +153,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 50),
             Container(
-              width: 120,
-              height: 120,
+              width: 150,
+              height: 150,
               decoration: BoxDecoration(
                 color: colorScheme.surface,
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(80),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(28),

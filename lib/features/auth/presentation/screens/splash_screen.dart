@@ -98,7 +98,7 @@ class _SplashScreenState extends State<SplashScreen>
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: textColor,
-                        fontSize: 24,
+                        fontSize: 26,
                         fontFamily: 'Podkova',
                         fontWeight: FontWeight.w400,
                         height: 1.0,

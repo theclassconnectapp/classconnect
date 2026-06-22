@@ -29,7 +29,7 @@ class PlatformPickScreen extends StatelessWidget {
                 'Class Connect',
                 style: TextStyle(
                   color: colorScheme.onSurface,
-                  fontSize: 28,
+                  fontSize: 26,
                   fontWeight: FontWeight.bold,
                 ),
               ),

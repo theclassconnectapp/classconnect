@@ -249,7 +249,7 @@ class _SignInScreenState extends State<_SignInScreen>
                     'Class Connect',
                     style: TextStyle(
                       color: colorScheme.onSurface,
-                      fontSize: 32,
+                      fontSize: 26,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Podkova',
                     ),

@@ -56,7 +56,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   'Class Connect',
                   style: TextStyle(
                     color: colorScheme.onSurface,
-                    fontSize: 20,
+                    fontSize: 26,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

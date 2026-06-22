@@ -42,7 +42,7 @@ class _SubTeacherHomeScreenState extends State<SubTeacherHomeScreen> {
                   'Class Connect',
                   style: TextStyle(
                     color: colorScheme.onSurface,
-                    fontSize: 20,
+                    fontSize: 26,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

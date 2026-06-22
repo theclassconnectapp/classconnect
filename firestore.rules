@@ -50,15 +50,14 @@ service cloud.firestore {
 
       match /users/{uid} {
         allow read: if signedIn()
-          && request.auth.uid == uid
-          && (hasCollegeClaim(collegeId) || resourceHasCollegeId(collegeId));
+          && request.auth.uid == uid;
         allow write: if signedIn()
           && request.auth.uid == uid
           && (hasCollegeClaim(collegeId) || requestHasCollegeId(collegeId));
       }
 
       match /groups/{groupId} {
-        allow read: if canReadCollegeResource(collegeId);
+        allow read: if signedIn();
         allow create: if canWriteCollegeResource(collegeId);
         allow update: if canWriteCollegeResource(collegeId)
           && request.resource.data.isGeneral == resource.data.isGeneral
@@ -74,18 +73,16 @@ service cloud.firestore {
           );
 
         match /members/{memberUid} {
-          allow read, write: if canAccessGroupScope(collegeId, groupId)
-            && isGroupMember(collegeId, groupId);
+          allow read: if signedIn();
+          allow write: if signedIn() && isGroupMember(collegeId, groupId);
         }
 
         match /messages/{messageId} {
-          allow read, write: if signedIn()
-            && canAccessGroupScope(collegeId, groupId);
+          allow read, write: if signedIn();
         }
 
         match /files/{fileId} {
-          allow read, write: if signedIn()
-            && canAccessGroupScope(collegeId, groupId);
+          allow read, write: if signedIn();
         }
 
         match /states/{uid} {
