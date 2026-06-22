@@ -452,9 +452,13 @@ class GroupRepositoryImpl implements GroupRepository {
   }) async {
     try {
       progressSink?.add(0);
-      final Uri uri = Uri.parse(
-        'https://api.cloudinary.com/v1_1/degztafwr/auto/upload',
-      );
+      final bool isPdf =
+          mimeType.toLowerCase().contains('pdf') ||
+          (filePath != null && filePath.toLowerCase().endsWith('.pdf'));
+      final String uploadUrl = isPdf
+          ? 'https://api.cloudinary.com/v1_1/degztafwr/raw/upload'
+          : 'https://api.cloudinary.com/v1_1/degztafwr/auto/upload';
+      final Uri uri = Uri.parse(uploadUrl);
       final _ProgressMultipartRequest request = _ProgressMultipartRequest(
         'POST',
         uri,
@@ -466,6 +470,7 @@ class GroupRepositoryImpl implements GroupRepository {
       );
       request.fields['upload_preset'] = 'classconnect_files';
       request.fields['folder'] = 'classconnect/groups/$groupId';
+      request.fields['resource_type'] = isPdf ? 'raw' : 'auto';
       if (bytes != null) {
         request.files.add(
           http.MultipartFile.fromBytes(

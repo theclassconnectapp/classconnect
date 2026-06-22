@@ -161,14 +161,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     }
 
     if (isPdf) {
-      final String pdfUrl = url.contains('cloudinary.com')
-          ? url
-                .replaceFirst('/image/upload/', '/raw/upload/')
-                .replaceFirst('/auto/upload/', '/raw/upload/')
-          : url;
+      // Legacy PDFs uploaded through Cloudinary image/auto delivery may still
+      // fail and need to be re-uploaded; new PDFs are stored as raw resources.
       Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => PdfViewerScreen(pdfUrl: pdfUrl, title: fileName),
+          builder: (_) => PdfViewerScreen(pdfUrl: url, title: fileName),
         ),
       );
       return;
