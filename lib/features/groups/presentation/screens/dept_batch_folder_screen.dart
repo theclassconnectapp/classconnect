@@ -47,8 +47,9 @@ class _DeptBatchFolderScreenState extends State<DeptBatchFolderScreen> {
     final result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => CreateGroupScreen(
-          allowGeneral: false,
           collegeRepository: sl<college_domain.CollegeRepository>(),
+          presetDept: widget.dept,
+          presetBatch: widget.batch,
         ),
       ),
     );

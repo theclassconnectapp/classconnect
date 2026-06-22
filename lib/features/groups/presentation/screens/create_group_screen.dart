@@ -10,26 +10,45 @@ import '../../../college/presentation/cubit/college_state.dart';
 class CreateGroupScreen extends StatelessWidget {
   const CreateGroupScreen({
     super.key,
-    required this.allowGeneral,
     required this.collegeRepository,
+    this.presetDept,
+    this.presetBatch,
+    this.presetDeptId,
+    this.presetBatchId,
   });
 
-  final bool allowGeneral;
   final CollegeRepository collegeRepository;
+  final String? presetDept;
+  final String? presetBatch;
+  final String? presetDeptId;
+  final String? presetBatchId;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider<CollegeCubit>(
       create: (_) => CollegeCubit(collegeRepository: collegeRepository),
-      child: _CreateGroupContent(allowGeneral: allowGeneral),
+      child: _CreateGroupContent(
+        presetDept: presetDept,
+        presetBatch: presetBatch,
+        presetDeptId: presetDeptId,
+        presetBatchId: presetBatchId,
+      ),
     );
   }
 }
 
 class _CreateGroupContent extends StatefulWidget {
-  const _CreateGroupContent({required this.allowGeneral});
+  const _CreateGroupContent({
+    this.presetDept,
+    this.presetBatch,
+    this.presetDeptId,
+    this.presetBatchId,
+  });
 
-  final bool allowGeneral;
+  final String? presetDept;
+  final String? presetBatch;
+  final String? presetDeptId;
+  final String? presetBatchId;
 
   @override
   State<_CreateGroupContent> createState() => _CreateGroupContentState();
@@ -46,10 +65,31 @@ class _CreateGroupContentState extends State<_CreateGroupContent> {
   List<Batch> _batches = <Batch>[];
   String _type = 'subject';
 
+  bool get _hasPresetScope =>
+      widget.presetDept != null && widget.presetBatch != null;
+
   @override
   void initState() {
     super.initState();
-    context.read<CollegeCubit>().loadDepartments(_collegeId);
+    if (_hasPresetScope) {
+      _department = Department(
+        id: widget.presetDeptId ?? widget.presetDept!,
+        collegeId: _collegeId,
+        slug: widget.presetDept!.toLowerCase().replaceAll(' ', '-'),
+        name: widget.presetDept!,
+        code: widget.presetDept!,
+      );
+      _batch = Batch(
+        id: widget.presetBatchId ?? widget.presetBatch!,
+        departmentId: _department!.id,
+        label: widget.presetBatch!,
+        startYear: 0,
+        endYear: 0,
+        archived: false,
+      );
+    } else {
+      context.read<CollegeCubit>().loadDepartments(_collegeId);
+    }
   }
 
   @override
@@ -73,8 +113,8 @@ class _CreateGroupContentState extends State<_CreateGroupContent> {
     Navigator.of(context).pop(<String, String>{
       'name': _nameController.text.trim(),
       'description': _descriptionController.text.trim(),
-      'dept': department.name,
-      'batch': batch.label,
+      'dept': widget.presetDept ?? department.name,
+      'batch': widget.presetBatch ?? batch.label,
       'type': _type,
     });
   }
@@ -126,11 +166,6 @@ class _CreateGroupContentState extends State<_CreateGroupContent> {
                   labelText: 'Group Type',
                 ),
                 items: <DropdownMenuItem<String>>[
-                  if (widget.allowGeneral)
-                    const DropdownMenuItem(
-                      value: 'general',
-                      child: Text('General'),
-                    ),
                   const DropdownMenuItem(
                     value: 'subject',
                     child: Text('Subject'),
@@ -162,7 +197,25 @@ class _CreateGroupContentState extends State<_CreateGroupContent> {
                   state.message,
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
-              if (!loading)
+              if (_hasPresetScope) ...<Widget>[
+                TextFormField(
+                  initialValue: widget.presetDept,
+                  readOnly: true,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Department',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  initialValue: widget.presetBatch,
+                  readOnly: true,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Batch',
+                  ),
+                ),
+              ] else if (!loading)
                 DropdownButtonFormField<Department>(
                   initialValue: _department,
                   decoration: const InputDecoration(
@@ -180,7 +233,7 @@ class _CreateGroupContentState extends State<_CreateGroupContent> {
                   onChanged: _onDepartmentChanged,
                 ),
               const SizedBox(height: 12),
-              if (!loading && _department != null)
+              if (!_hasPresetScope && !loading && _department != null)
                 DropdownButtonFormField<Batch>(
                   initialValue: _batch,
                   decoration: const InputDecoration(
