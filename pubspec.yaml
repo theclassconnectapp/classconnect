@@ -51,6 +51,7 @@ flutter:
   assets:
     - .env.development
     - .env.production
+    - assets/icons/google_g.png
 
 flutter_launcher_icons:
   android: true

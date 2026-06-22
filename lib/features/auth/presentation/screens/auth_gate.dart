@@ -312,9 +312,10 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CustomPaint(
-              size: const Size.square(22),
-              painter: const _GoogleLogoPainter(),
+            Image.asset(
+              'assets/icons/google_g.png',
+              width: 22,
+              height: 22,
             ),
             const SizedBox(width: 12),
             Text(
@@ -330,62 +331,4 @@ class _GoogleSignInButtonState extends State<_GoogleSignInButton> {
       ),
     );
   }
-}
-
-class _GoogleLogoPainter extends CustomPainter {
-  const _GoogleLogoPainter();
-
-  static const Color _blue = Color(0xFF4285F4);
-  static const Color _red = Color(0xFFEA4335);
-  static const Color _yellow = Color(0xFFFBBC05);
-  static const Color _green = Color(0xFF34A853);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final double strokeWidth = size.width * 0.18;
-    final Rect arcRect = Rect.fromLTWH(
-      strokeWidth / 2,
-      strokeWidth / 2,
-      size.width - strokeWidth,
-      size.height - strokeWidth,
-    );
-    final Paint paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    void drawArc(Color color, double startDegrees, double sweepDegrees) {
-      paint.color = color;
-      canvas.drawArc(
-        arcRect,
-        startDegrees * 3.141592653589793 / 180,
-        sweepDegrees * 3.141592653589793 / 180,
-        false,
-        paint,
-      );
-    }
-
-    drawArc(_blue, -38, 74);
-    drawArc(_red, -150, 112);
-    drawArc(_yellow, 142, 72);
-    drawArc(_green, 45, 97);
-
-    paint
-      ..color = _blue
-      ..strokeCap = StrokeCap.square;
-    final Offset center = Offset(size.width / 2, size.height / 2);
-    canvas.drawLine(
-      Offset(center.dx, center.dy),
-      Offset(size.width * 0.88, center.dy),
-      paint,
-    );
-    canvas.drawLine(
-      Offset(size.width * 0.88, center.dy),
-      Offset(size.width * 0.88, size.height * 0.66),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _GoogleLogoPainter oldDelegate) => false;
 }
