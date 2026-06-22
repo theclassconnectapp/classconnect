@@ -51,7 +51,8 @@ class VideoViewerScreen extends StatefulWidget {
   State<VideoViewerScreen> createState() => _VideoViewerScreenState();
 }
 
-class _VideoViewerScreenState extends State<VideoViewerScreen> {
+class _VideoViewerScreenState extends State<VideoViewerScreen>
+    with WidgetsBindingObserver {
   VideoPlayerController? _videoController;
   ChewieController? _chewieController;
   String? _error;
@@ -59,16 +60,22 @@ class _VideoViewerScreenState extends State<VideoViewerScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _init();
   }
 
   Future<void> _init() async {
+    _disposeVideoControllers();
+    setState(() => _error = null);
+
     try {
       final VideoPlayerController controller = VideoPlayerController.networkUrl(
         Uri.parse(widget.videoUrl),
       );
       await controller.initialize();
       if (!mounted) return;
+
+      final Color primaryColor = Theme.of(context).colorScheme.primary;
       setState(() {
         _videoController = controller;
         _chewieController = ChewieController(
@@ -76,36 +83,134 @@ class _VideoViewerScreenState extends State<VideoViewerScreen> {
           autoPlay: true,
           looping: false,
           allowFullScreen: true,
+          allowMuting: true,
+          allowPlaybackSpeedChanging: true,
+          showControlsOnInitialize: true,
+          aspectRatio: _videoAspectRatio(controller),
+          placeholder: Container(color: Colors.black),
+          materialProgressColors: ChewieProgressColors(
+            playedColor: primaryColor,
+            handleColor: primaryColor,
+            backgroundColor: Colors.white24,
+            bufferedColor: Colors.white38,
+          ),
+          errorBuilder: (context, errorMessage) =>
+              _buildErrorView(context, errorMessage),
         );
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = 'Failed to load video: $e');
+      setState(() => _error = e.toString());
+    }
+  }
+
+  double _videoAspectRatio(VideoPlayerController controller) {
+    final Size size = controller.value.size;
+    if (size.width > 0 && size.height > 0) {
+      return size.width / size.height;
+    }
+    return controller.value.aspectRatio;
+  }
+
+  void _disposeVideoControllers() {
+    _chewieController?.dispose();
+    _videoController?.dispose();
+    _chewieController = null;
+    _videoController = null;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _videoController?.pause();
     }
   }
 
   @override
   void dispose() {
-    _chewieController?.dispose();
-    _videoController?.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    _disposeVideoControllers();
     super.dispose();
+  }
+
+  Widget _buildLoadingView() {
+    return const ColoredBox(
+      color: Colors.black,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text(
+              'Loading video…',
+              style: TextStyle(color: Colors.white70),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorView(BuildContext context, String errorMessage) {
+    return ColoredBox(
+      color: Colors.black,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.videocam_off_outlined,
+                color: Colors.white70,
+                size: 48,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                "Couldn't load video",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                errorMessage,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white60),
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: _init,
+                child: const Text('Try again'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        foregroundColor: colorScheme.onSurface,
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        elevation: 0,
         title: Text(widget.title ?? 'Video'),
       ),
       body: Center(
         child: _error != null
-            ? Text(_error!, style: TextStyle(color: colorScheme.onSurface))
+            ? _buildErrorView(context, _error!)
             : _chewieController == null
-            ? const CircularProgressIndicator()
+            ? _buildLoadingView()
             : Chewie(controller: _chewieController!),
       ),
     );
