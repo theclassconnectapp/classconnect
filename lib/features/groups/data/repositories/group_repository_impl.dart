@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:convert';
@@ -421,12 +422,24 @@ class GroupRepositoryImpl implements GroupRepository {
     required String mimeType,
     String? filePath,
     Uint8List? bytes,
+    StreamSink<double>? progressSink,
+    bool Function()? isCancelled,
+    void Function(void Function() cancelUpload)? registerCancel,
   }) async {
     try {
+      progressSink?.add(0);
       final Uri uri = Uri.parse(
         'https://api.cloudinary.com/v1_1/degztafwr/auto/upload',
       );
-      final http.MultipartRequest request = http.MultipartRequest('POST', uri);
+      final _ProgressMultipartRequest request = _ProgressMultipartRequest(
+        'POST',
+        uri,
+        isCancelled: isCancelled,
+        onProgress: (int sent, int total) {
+          if (total <= 0) return;
+          progressSink?.add(((sent / total) * 0.95).clamp(0, 0.95).toDouble());
+        },
+      );
       request.fields['upload_preset'] = 'classconnect_files';
       request.fields['folder'] = 'classconnect/groups/$groupId';
       if (bytes != null) {
@@ -449,14 +462,23 @@ class GroupRepositoryImpl implements GroupRepository {
       } else {
         throw Exception('Missing file bytes/path');
       }
-      final http.StreamedResponse response = await request.send();
-      final String body = await response.stream.bytesToString();
-      if (response.statusCode != 200) {
-        throw Exception('Cloudinary upload failed: $body');
+      if (isCancelled?.call() ?? false) {
+        throw const _UploadCancelledException();
       }
-      final Map<String, dynamic> json =
-          jsonDecode(body) as Map<String, dynamic>;
-      return json['secure_url'] as String;
+      final http.Client client = http.Client();
+      registerCancel?.call(client.close);
+      try {
+        final http.StreamedResponse response = await client.send(request);
+        final String body = await response.stream.bytesToString();
+        if (response.statusCode != 200) {
+          throw Exception('Cloudinary upload failed: $body');
+        }
+        final Map<String, dynamic> json =
+            jsonDecode(body) as Map<String, dynamic>;
+        return json['secure_url'] as String;
+      } finally {
+        client.close();
+      }
     } catch (e) {
       throw Exception('Upload failed: $e');
     }
@@ -474,6 +496,9 @@ class GroupRepositoryImpl implements GroupRepository {
     Uint8List? bytes,
     Map<String, dynamic>? replyTo,
     bool isForwarded = false,
+    StreamSink<double>? progressSink,
+    bool Function()? isCancelled,
+    void Function(void Function() cancelUpload)? registerCancel,
   }) async {
     try {
       final String url = await _uploadToStorage(
@@ -482,10 +507,17 @@ class GroupRepositoryImpl implements GroupRepository {
         mimeType: mimeType,
         filePath: localPath,
         bytes: bytes,
+        progressSink: progressSink,
+        isCancelled: isCancelled,
+        registerCancel: registerCancel,
       );
+      if (isCancelled?.call() ?? false) {
+        throw const _UploadCancelledException();
+      }
       if (type == MessageType.pdf || mimeType.toLowerCase().contains('pdf')) {
         debugPrint('Cloudinary PDF secure_url: $url');
       }
+      progressSink?.add(0.95);
       final WriteBatch write = _firestore.batch();
       final DocumentReference<Map<String, dynamic>> msgRef = _groupRef(
         groupId,
@@ -523,6 +555,7 @@ class GroupRepositoryImpl implements GroupRepository {
         'uploadedAt': FieldValue.serverTimestamp(),
       });
       await write.commit();
+      progressSink?.add(1);
     } catch (e) {
       throw Exception('Failed to send file message: $e');
     }
@@ -749,5 +782,48 @@ class GroupRepositoryImpl implements GroupRepository {
     await _groupRef(
       groupId,
     ).collection(FirestoreCollections.files).doc(fileId).delete();
+  }
+}
+
+class _UploadCancelledException implements Exception {
+  const _UploadCancelledException();
+
+  @override
+  String toString() => 'Upload cancelled';
+}
+
+class _ProgressMultipartRequest extends http.MultipartRequest {
+  _ProgressMultipartRequest(
+    super.method,
+    super.url, {
+    required this.onProgress,
+    this.isCancelled,
+  });
+
+  final void Function(int sent, int total) onProgress;
+  final bool Function()? isCancelled;
+
+  @override
+  http.ByteStream finalize() {
+    final int total = contentLength;
+    int sent = 0;
+    final http.ByteStream byteStream = super.finalize();
+
+    return http.ByteStream(
+      byteStream.transform(
+        StreamTransformer<List<int>, List<int>>.fromHandlers(
+          handleData: (List<int> data, EventSink<List<int>> sink) {
+            if (isCancelled?.call() ?? false) {
+              sink.addError(const _UploadCancelledException());
+              sink.close();
+              return;
+            }
+            sent += data.length;
+            onProgress(sent, total);
+            sink.add(data);
+          },
+        ),
+      ),
+    );
   }
 }

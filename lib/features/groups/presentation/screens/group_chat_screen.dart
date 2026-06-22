@@ -20,6 +20,7 @@ import '../../data/models/group_models.dart';
 import '../../data/repositories/group_repository_impl.dart';
 import '../../domain/repositories/group_repository.dart';
 import 'package:classconnect/core/media/media_viewer_screens.dart';
+import 'package:classconnect/core/media/upload_progress_sheet.dart';
 import 'group_info_screen.dart';
 import 'members_screen.dart';
 
@@ -294,28 +295,75 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             'content': _replyTo!.content,
             'type': _replyTo!.type.id,
           };
+    if (!mounted) return;
     setState(() => _isUploading = true);
+    final StreamController<double> progressController =
+        StreamController<double>();
+    bool isCancelled = false;
+    VoidCallback? cancelUpload;
+    Future<void>? activeUpload;
+
     try {
-      await widget.groupRepository.sendFileMessage(
-        groupId: widget.groupId,
-        sender: widget.user,
-        type: type,
-        fileName: file.name,
-        mimeType: mimeType,
-        fileSize: file.size,
-        localPath: file.path,
-        bytes: file.bytes,
-        replyTo: reply,
+      final bool? uploaded = await showModalBottomSheet<bool>(
+        context: context,
+        isDismissible: false,
+        enableDrag: false,
+        builder: (BuildContext context) {
+          return UploadProgressSheet(
+            fileName: file.name,
+            fileSize: _formatFileSize(file.size),
+            progressStream: progressController.stream,
+            onCancel: () {
+              isCancelled = true;
+              cancelUpload?.call();
+            },
+            onRetry: () {
+              isCancelled = false;
+              cancelUpload = null;
+              progressController.add(0);
+            },
+            uploadTask: () {
+              activeUpload = widget.groupRepository.sendFileMessage(
+                groupId: widget.groupId,
+                sender: widget.user,
+                type: type,
+                fileName: file.name,
+                mimeType: mimeType,
+                fileSize: file.size,
+                localPath: file.path,
+                bytes: file.bytes,
+                replyTo: reply,
+                progressSink: progressController.sink,
+                isCancelled: () => isCancelled,
+                registerCancel: (void Function() cancel) {
+                  cancelUpload = cancel;
+                },
+              );
+              return activeUpload!;
+            },
+          );
+        },
       );
-      setState(() => _replyTo = null);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to send file: $e')));
+      if (uploaded == true && mounted) {
+        setState(() => _replyTo = null);
+      }
     } finally {
+      if (isCancelled) {
+        await activeUpload?.catchError((Object _) {});
+      }
+      await progressController.close();
       if (mounted) setState(() => _isUploading = false);
     }
+  }
+
+  String _formatFileSize(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    final double kb = bytes / 1024;
+    if (kb < 1024) return '${kb.toStringAsFixed(1)} KB';
+    final double mb = kb / 1024;
+    if (mb < 1024) return '${mb.toStringAsFixed(1)} MB';
+    final double gb = mb / 1024;
+    return '${gb.toStringAsFixed(1)} GB';
   }
 
   Future<void> _copy(ChatMessage message) async {

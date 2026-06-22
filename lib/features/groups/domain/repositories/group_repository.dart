@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
@@ -72,6 +73,9 @@ abstract class GroupRepository {
     Uint8List? bytes,
     Map<String, dynamic>? replyTo,
     bool isForwarded,
+    StreamSink<double>? progressSink,
+    bool Function()? isCancelled,
+    void Function(void Function() cancelUpload)? registerCancel,
   });
 
   Future<void> markGroupSeen({required String groupId, required String uid});
