@@ -163,9 +163,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     }
 
     if (isPdf) {
+      final String pdfUrl = url.contains('cloudinary.com')
+          ? url
+                .replaceFirst('/image/upload/', '/raw/upload/')
+                .replaceFirst('/auto/upload/', '/raw/upload/')
+          : url;
       Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) => PdfViewerScreen(pdfUrl: url, title: fileName),
+          builder: (_) => PdfViewerScreen(pdfUrl: pdfUrl, title: fileName),
         ),
       );
       return;

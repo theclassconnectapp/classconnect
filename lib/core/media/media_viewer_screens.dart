@@ -136,6 +136,11 @@ class _PdfViewerScreenState extends State<PdfViewerScreen> {
   Future<void> _download() async {
     try {
       final http.Response response = await http.get(Uri.parse(widget.pdfUrl));
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        debugPrint('PDF download failed: ${response.statusCode}');
+        debugPrint('PDF response headers: ${response.headers}');
+        throw Exception('HTTP ${response.statusCode}');
+      }
       final Directory dir = await getTemporaryDirectory();
       final String name = widget.pdfUrl.split('/').last.split('?').first;
       final File file = File('${dir.path}/$name');

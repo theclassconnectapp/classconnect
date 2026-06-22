@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
@@ -482,6 +483,9 @@ class GroupRepositoryImpl implements GroupRepository {
         filePath: localPath,
         bytes: bytes,
       );
+      if (type == MessageType.pdf || mimeType.toLowerCase().contains('pdf')) {
+        debugPrint('Cloudinary PDF secure_url: $url');
+      }
       final WriteBatch write = _firestore.batch();
       final DocumentReference<Map<String, dynamic>> msgRef = _groupRef(
         groupId,
