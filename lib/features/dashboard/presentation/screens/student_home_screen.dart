@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/animation/motion.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../ai/domain/entities/ai_scope.dart';
 import '../../../ai/domain/repositories/ai_repository.dart';
 import '../../../ai/presentation/screens/ai_chat_screen.dart';
 import '../../../auth/domain/entities/app_user.dart';
@@ -70,8 +71,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                       tooltip: 'ClassConnect AI',
                       onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                          builder: (_) =>
-                              AiChatScreen(aiRepository: sl<AiRepository>()),
+                          builder: (_) => AiChatScreen(
+                            aiRepository: sl<AiRepository>(),
+                            user: widget.user,
+                            scope: AiScope.semester,
+                            scopeId: '${dept}_$batch',
+                          ),
                         ),
                       ),
                     ),
@@ -254,7 +259,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> tabs = [
-      AiChatScreen(aiRepository: sl<AiRepository>()),
+      AiChatScreen(
+        aiRepository: sl<AiRepository>(),
+        user: widget.user,
+        scope: AiScope.semester,
+        scopeId: '${widget.user.dept ?? ''}_${widget.user.batch ?? ''}',
+      ),
       _homeTab(),
       ProfileScreen(user: widget.user),
     ];

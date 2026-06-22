@@ -7,6 +7,7 @@ import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/domain/entities/user_role.dart';
 import '../../../college/domain/repositories/college_repository.dart'
     as college_domain;
+import '../../../ai/domain/entities/ai_scope.dart';
 import '../../data/models/group_models.dart';
 import '../../data/repositories/group_repository_impl.dart';
 import '../../domain/repositories/group_repository.dart';
@@ -87,6 +88,7 @@ class _DeptBatchFolderScreenState extends State<DeptBatchFolderScreen> {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => AiAssistantScreen(
+          user: widget.user,
           scope: groupId != null ? AiScope.group : AiScope.semester,
           semesterId: '${widget.dept}_${widget.batch}',
           groupId: groupId,

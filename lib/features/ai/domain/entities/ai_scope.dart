@@ -1,0 +1,1 @@
+enum AiScope { semester, group }

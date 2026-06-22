@@ -2,29 +2,61 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
+import '../../../auth/domain/entities/app_user.dart';
+import '../../domain/entities/ai_scope.dart';
 import '../../domain/repositories/ai_repository.dart';
 import '../cubit/ai_cubit.dart';
 import '../cubit/ai_state.dart';
+import 'ai_history_screen.dart';
 
 const String _rateLimitMessage =
     "You've used all 5 daily AI questions. Come back in 24 hours!";
 
 class AiChatScreen extends StatelessWidget {
-  const AiChatScreen({super.key, required this.aiRepository});
+  const AiChatScreen({
+    super.key,
+    required this.aiRepository,
+    required this.user,
+    required this.scope,
+    required this.scopeId,
+    this.sessionId,
+  });
 
   final AiRepository aiRepository;
+  final AppUser user;
+  final AiScope scope;
+  final String scopeId;
+  final String? sessionId;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider<AiCubit>(
       create: (_) => AiCubit(aiRepository: aiRepository),
-      child: const _AiChatView(),
+      child: _AiChatView(
+        user: user,
+        scope: scope,
+        scopeId: scopeId,
+        sessionId: sessionId,
+        aiRepository: aiRepository,
+      ),
     );
   }
 }
 
 class _AiChatView extends StatefulWidget {
-  const _AiChatView();
+  const _AiChatView({
+    required this.user,
+    required this.scope,
+    required this.scopeId,
+    required this.aiRepository,
+    this.sessionId,
+  });
+
+  final AppUser user;
+  final AiScope scope;
+  final String scopeId;
+  final AiRepository aiRepository;
+  final String? sessionId;
 
   @override
   State<_AiChatView> createState() => _AiChatViewState();
@@ -33,6 +65,23 @@ class _AiChatView extends StatefulWidget {
 class _AiChatViewState extends State<_AiChatView> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.sessionId != null) {
+      context.read<AiCubit>().loadSession(
+        uid: widget.user.uid,
+        sessionId: widget.sessionId!,
+      );
+    } else {
+      context.read<AiCubit>().startSession(
+        uid: widget.user.uid,
+        scope: widget.scope.name,
+        scopeId: widget.scopeId,
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -70,23 +119,46 @@ class _AiChatViewState extends State<_AiChatView> {
       listener: (context, state) => _scrollToBottom(),
       builder: (context, state) {
         final bool loading = state is AiLoading;
+        final bool loadingSession = state is AiSessionLoading;
         return Scaffold(
-          appBar: AppBar(title: const Text('ClassConnect AI')),
+          appBar: AppBar(
+            title: const Text('ClassConnect AI'),
+            actions: <Widget>[
+              IconButton(
+                tooltip: 'AI History',
+                icon: const Icon(Icons.history),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => AiHistoryScreen(
+                      aiRepository: widget.aiRepository,
+                      user: widget.user,
+                      scope: widget.scope,
+                      scopeId: widget.scopeId,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
           body: SafeArea(
             child: Column(
               children: <Widget>[
                 Expanded(
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                    itemCount: state.messages.length + (loading ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (index == state.messages.length) {
-                        return const _TypingIndicator();
-                      }
-                      return _MessageBubble(message: state.messages[index]);
-                    },
-                  ),
+                  child: loadingSession
+                      ? const Center(child: CircularProgressIndicator())
+                      : ListView.builder(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                          itemCount: state.messages.length + (loading ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (index == state.messages.length) {
+                              return const _TypingIndicator();
+                            }
+                            return _MessageBubble(
+                              message: state.messages[index],
+                            );
+                          },
+                        ),
                 ),
                 DecoratedBox(
                   decoration: BoxDecoration(
@@ -104,7 +176,7 @@ class _AiChatViewState extends State<_AiChatView> {
                         Expanded(
                           child: TextField(
                             controller: _controller,
-                            enabled: !loading,
+                            enabled: !loading && !loadingSession,
                             minLines: 1,
                             maxLines: 4,
                             textInputAction: TextInputAction.send,
@@ -113,13 +185,15 @@ class _AiChatViewState extends State<_AiChatView> {
                               border: OutlineInputBorder(),
                               isDense: true,
                             ),
-                            onSubmitted: loading ? null : (_) => _send(),
+                            onSubmitted: loading || loadingSession
+                                ? null
+                                : (_) => _send(),
                           ),
                         ),
                         const SizedBox(width: 8),
                         IconButton.filled(
                           tooltip: 'Send',
-                          onPressed: loading ? null : _send,
+                          onPressed: loading || loadingSession ? null : _send,
                           icon: const Icon(Icons.send),
                         ),
                       ],

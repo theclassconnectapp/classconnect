@@ -26,6 +26,10 @@ class AiLoading extends AiState {
   const AiLoading(super.messages);
 }
 
+class AiSessionLoading extends AiState {
+  const AiSessionLoading(super.messages);
+}
+
 class AiLoaded extends AiState {
   const AiLoaded(super.messages);
 }

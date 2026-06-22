@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../core/animation/motion.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../ai/domain/entities/ai_scope.dart';
 import '../../../ai/domain/repositories/ai_repository.dart';
 import '../../../ai/presentation/screens/ai_chat_screen.dart';
 import '../../../auth/domain/entities/app_user.dart';
@@ -172,7 +173,12 @@ class _SubTeacherHomeScreenState extends State<SubTeacherHomeScreen> {
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final List<Widget> tabs = [
-      AiChatScreen(aiRepository: sl<AiRepository>()),
+      AiChatScreen(
+        aiRepository: sl<AiRepository>(),
+        user: widget.user,
+        scope: AiScope.semester,
+        scopeId: '${widget.user.dept ?? ''}_${widget.user.batch ?? ''}',
+      ),
       _homeTab(),
       ProfileScreen(user: widget.user),
     ];
@@ -186,10 +192,7 @@ class _SubTeacherHomeScreenState extends State<SubTeacherHomeScreen> {
             opacity: active ? 1.0 : 0.0,
             duration: Motion.tabSwitch,
             curve: Motion.standard,
-            child: IgnorePointer(
-              ignoring: !active,
-              child: tabs[i],
-            ),
+            child: IgnorePointer(ignoring: !active, child: tabs[i]),
           );
         }),
       ),
