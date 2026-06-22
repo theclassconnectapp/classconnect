@@ -89,9 +89,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   bool _isMuted(Map<String, dynamic> group) {
-    final List<dynamic> muted =
-        (group['mutedMembers'] as List<dynamic>?) ?? <dynamic>[];
-    return muted.contains(widget.user.uid);
+    final List<dynamic> mutedUids =
+        group['mutedUids'] as List<dynamic>? ?? <dynamic>[];
+    return mutedUids.contains(widget.user.uid);
   }
 
   bool _isSubjectGroup(Map<String, dynamic> group) =>
@@ -104,10 +104,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   bool _canSend(Map<String, dynamic> group) {
-    if (_isMuted(group)) return false;
-    final bool onlyAdmins = group['onlyAdminsCanMessage'] as bool? ?? false;
-    if (onlyAdmins && !_isAdmin(group)) return false;
-    return true;
+    return !widget.readOnly && !_isMuted(group);
   }
 
   /// Opens media in-app: images/videos/pdfs get native in-app viewers,
@@ -244,10 +241,18 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   Future<void> _attachFile(Map<String, dynamic> group) async {
-    if (!_canSend(group) || widget.user.role == UserRole.student) {
+    if (!_canSend(group)) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('You cannot upload files in this group')),
+      );
+      return;
+    }
+    if (widget.user.role == UserRole.student &&
+        !(group['studentFileSharingEnabled'] as bool? ?? false)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Students cannot share files here')),
       );
       return;
     }
@@ -1048,6 +1053,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             final String title = (group['name'] as String?) ?? 'Group';
             final String? photoUrl = group['photoUrl'] as String?;
             final bool canSend = _canSend(group);
+            final bool canAttach = () {
+              if (widget.readOnly) return false;
+              if (widget.user.role == UserRole.student) {
+                if (_isMuted(group)) return false;
+                return group['studentFileSharingEnabled'] as bool? ?? false;
+              }
+              return true;
+            }();
             final bool isAdmin = _isAdmin(group);
             final String? pinnedMessageId = group['pinnedMessageId'] as String?;
             final bool showJoinGate =
@@ -1294,7 +1307,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                             child: Text(
                                               _isMuted(group)
                                                   ? 'You are muted'
-                                                  : 'Only admins can send messages',
+                                                  : 'You cannot send messages',
                                             ),
                                           ),
                                         Expanded(
@@ -1375,34 +1388,30 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                                   ),
                                               child: Row(
                                                 children: <Widget>[
-                                                  IconButton(
-                                                    onPressed: _isUploading
-                                                        ? null
-                                                        : (canSend &&
-                                                                  widget
-                                                                          .user
-                                                                          .role !=
-                                                                      UserRole
-                                                                          .student
-                                                              ? () =>
-                                                                    _attachFile(
-                                                                      group,
-                                                                    )
-                                                              : null),
-                                                    icon: _isUploading
-                                                        ? const SizedBox(
-                                                            width: 20,
-                                                            height: 20,
-                                                            child:
-                                                                CircularProgressIndicator(
-                                                                  strokeWidth:
-                                                                      2,
-                                                                ),
-                                                          )
-                                                        : const Icon(
-                                                            Icons.attach_file,
-                                                          ),
-                                                  ),
+                                                  if (canAttach)
+                                                    IconButton(
+                                                      onPressed: _isUploading
+                                                          ? null
+                                                          : () => _attachFile(
+                                                              group,
+                                                            ),
+                                                      icon: _isUploading
+                                                          ? const SizedBox(
+                                                              width: 20,
+                                                              height: 20,
+                                                              child:
+                                                                  CircularProgressIndicator(
+                                                                    strokeWidth:
+                                                                        2,
+                                                                  ),
+                                                            )
+                                                          : const Icon(
+                                                              Icons.attach_file,
+                                                            ),
+                                                    )
+                                                  else if (widget.user.role ==
+                                                      UserRole.student)
+                                                    const SizedBox.shrink(),
                                                   Expanded(
                                                     child: TextField(
                                                       controller:

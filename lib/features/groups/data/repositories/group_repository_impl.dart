@@ -33,6 +33,28 @@ bool canDeleteGroup({
   return false;
 }
 
+/// Returns true if currentUser can moderate (mute/unmute,
+/// toggle file sharing) in the given group.
+bool canModerateGroup({
+  required AppUser currentUser,
+  required Map<String, dynamic> group,
+}) {
+  final String groupDept = group['dept'] as String? ?? '';
+  final String groupBatch = group['batch'] as String? ?? '';
+  final String createdByUid = group['createdByUid'] as String? ?? '';
+
+  switch (currentUser.role) {
+    case UserRole.hod:
+      return groupDept == currentUser.dept;
+    case UserRole.advisor:
+      return groupDept == currentUser.dept && groupBatch == currentUser.batch;
+    case UserRole.subjectTeacher:
+      return createdByUid == currentUser.uid;
+    case UserRole.student:
+      return false;
+  }
+}
+
 class GroupRepositoryImpl implements GroupRepository {
   GroupRepositoryImpl({
     required this.collegeId,
@@ -92,7 +114,8 @@ class GroupRepositoryImpl implements GroupRepository {
           'createdByName': advisorName,
           'createdAt': FieldValue.serverTimestamp(),
           'admins': <String>[advisorUid],
-          'mutedMembers': <String>[],
+          'mutedUids': <String>[],
+          'studentFileSharingEnabled': false,
           'onlyAdminsCanMessage': false,
           'photoUrl': null,
           'pinnedMessageId': null,
@@ -249,7 +272,8 @@ class GroupRepositoryImpl implements GroupRepository {
       'description': description.trim(),
       'memberIds': <String>[createdByUid],
       'admins': <String>[createdByUid],
-      'mutedMembers': <String>[],
+      'mutedUids': <String>[],
+      'studentFileSharingEnabled': false,
       'onlyAdminsCanMessage': false,
       'photoUrl': null,
       'pinnedMessageId': null,
@@ -695,7 +719,20 @@ class GroupRepositoryImpl implements GroupRepository {
     required List<String> mutedUids,
   }) async {
     await _groupRef(groupId).set(<String, dynamic>{
-      'mutedMembers': mutedUids.toSet().toList(),
+      'mutedUids': mutedUids.toSet().toList(),
+    }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> setMemberMuted({
+    required String groupId,
+    required String memberUid,
+    required bool muted,
+  }) async {
+    await _groupRef(groupId).set(<String, dynamic>{
+      'mutedUids': muted
+          ? FieldValue.arrayUnion(<String>[memberUid])
+          : FieldValue.arrayRemove(<String>[memberUid]),
     }, SetOptions(merge: true));
   }
 
@@ -706,6 +743,16 @@ class GroupRepositoryImpl implements GroupRepository {
   }) async {
     await _groupRef(groupId).set(<String, dynamic>{
       'onlyAdminsCanMessage': enabled,
+    }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> setStudentFileSharingEnabled({
+    required String groupId,
+    required bool enabled,
+  }) async {
+    await _groupRef(groupId).set(<String, dynamic>{
+      'studentFileSharingEnabled': enabled,
     }, SetOptions(merge: true));
   }
 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/domain/entities/user_role.dart';
+import '../../data/repositories/group_repository_impl.dart';
 import '../../domain/repositories/group_repository.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 
@@ -39,6 +40,42 @@ class _MembersScreenState extends State<MembersScreen> {
     return admins.contains(widget.currentUser.uid) || _isSuperAdmin(group);
   }
 
+  Future<void> _toggleMute({
+    required BuildContext context,
+    required String memberUid,
+    required String memberName,
+    required bool muted,
+  }) async {
+    try {
+      await widget.groupRepository.setMemberMuted(
+        groupId: widget.groupId,
+        memberUid: memberUid,
+        muted: !muted,
+      );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            muted
+                ? '$memberName has been unmuted.'
+                : '$memberName has been muted.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            muted
+                ? 'Failed to unmute member. Please try again.'
+                : 'Failed to mute member. Please try again.',
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> _memberActions(
     BuildContext context, {
     required Map<String, dynamic> group,
@@ -49,11 +86,7 @@ class _MembersScreenState extends State<MembersScreen> {
     if (!_isAdmin(group)) return;
     final List<String> admins =
         ((group['admins'] as List<dynamic>?) ?? <dynamic>[]).cast<String>();
-    final List<String> muted =
-        ((group['mutedMembers'] as List<dynamic>?) ?? <dynamic>[])
-            .cast<String>();
     final bool memberIsAdmin = admins.contains(memberUid);
-    final bool memberIsMuted = muted.contains(memberUid);
     final bool canPromote =
         memberRole != UserRole.student.id &&
         !memberIsAdmin &&
@@ -68,16 +101,6 @@ class _MembersScreenState extends State<MembersScreen> {
               ListTile(
                 title: const Text('Make Admin'),
                 onTap: () => Navigator.of(context).pop('promote'),
-              ),
-            if (memberIsMuted)
-              ListTile(
-                title: const Text('Unmute'),
-                onTap: () => Navigator.of(context).pop('unmute'),
-              ),
-            if (!memberIsMuted)
-              ListTile(
-                title: const Text('Mute'),
-                onTap: () => Navigator.of(context).pop('mute'),
               ),
             if (memberUid != widget.currentUser.uid)
               ListTile(
@@ -106,48 +129,6 @@ class _MembersScreenState extends State<MembersScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to promote member. Please try again.'),
-          ),
-        );
-      }
-      return;
-    }
-    if (action == 'mute') {
-      try {
-        muted.add(memberUid);
-        await widget.groupRepository.setMutedMembers(
-          groupId: widget.groupId,
-          mutedUids: muted,
-        );
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('$memberName has been muted.')));
-      } catch (e) {
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to mute member. Please try again.'),
-          ),
-        );
-      }
-      return;
-    }
-    if (action == 'unmute') {
-      try {
-        muted.remove(memberUid);
-        await widget.groupRepository.setMutedMembers(
-          groupId: widget.groupId,
-          mutedUids: muted,
-        );
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$memberName has been unmuted.')),
-        );
-      } catch (e) {
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to unmute member. Please try again.'),
           ),
         );
       }
@@ -189,8 +170,12 @@ class _MembersScreenState extends State<MembersScreen> {
                 ((liveGroup['admins'] as List<dynamic>?) ?? <dynamic>[])
                     .cast<String>();
             final List<String> muted =
-                ((liveGroup['mutedMembers'] as List<dynamic>?) ?? <dynamic>[])
+                ((liveGroup['mutedUids'] as List<dynamic>?) ?? <dynamic>[])
                     .cast<String>();
+            final bool canModerate = canModerateGroup(
+              currentUser: widget.currentUser,
+              group: liveGroup,
+            );
             return Scaffold(
               appBar: AppBar(
                 title: Text('Members - ${widget.groupTitle}'),
@@ -244,6 +229,8 @@ class _MembersScreenState extends State<MembersScreen> {
                           final String uid = (data['uid'] as String?) ?? '';
                           final bool memberIsAdmin = admins.contains(uid);
                           final bool memberIsMuted = muted.contains(uid);
+                          final bool memberIsStudent =
+                              role == UserRole.student.id;
                           return ListTile(
                             leading: UserAvatar(name: name, photoUrl: photoUrl),
                             title: Row(
@@ -257,7 +244,7 @@ class _MembersScreenState extends State<MembersScreen> {
                                 if (memberIsMuted)
                                   const Padding(
                                     padding: EdgeInsets.only(left: 6),
-                                    child: Text('🔇'),
+                                    child: Chip(label: Text('Muted')),
                                   ),
                               ],
                             ),
@@ -267,6 +254,22 @@ class _MembersScreenState extends State<MembersScreen> {
                                 role,
                               ].where((String s) => s.isNotEmpty).join(' • '),
                             ),
+                            trailing: canModerate && memberIsStudent
+                                ? IconButton(
+                                    tooltip: memberIsMuted ? 'Unmute' : 'Mute',
+                                    icon: Icon(
+                                      memberIsMuted
+                                          ? Icons.volume_up_outlined
+                                          : Icons.volume_off_outlined,
+                                    ),
+                                    onPressed: () => _toggleMute(
+                                      context: context,
+                                      memberUid: uid,
+                                      memberName: name,
+                                      muted: memberIsMuted,
+                                    ),
+                                  )
+                                : null,
                             onLongPress: () => _memberActions(
                               context,
                               group: liveGroup,

@@ -1,8 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../../auth/domain/entities/app_user.dart';
 import '../../../auth/domain/entities/user_role.dart';
+import '../../data/repositories/group_repository_impl.dart';
 import '../../domain/repositories/group_repository.dart';
 
 class GroupInfoScreen extends StatefulWidget {
@@ -145,49 +147,86 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final String name = (widget.groupData['name'] as String?) ?? '';
-    final String desc = (widget.groupData['description'] as String?) ?? '';
-    final String? photoUrl = widget.groupData['photoUrl'] as String?;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Group Info')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: <Widget>[
-          CircleAvatar(
-            radius: 34,
-            backgroundImage: photoUrl != null && photoUrl.isNotEmpty
-                ? NetworkImage(photoUrl)
-                : null,
-            child: photoUrl == null || photoUrl.isEmpty
-                ? Text(name.isEmpty ? '?' : name[0].toUpperCase())
-                : null,
-          ),
-          const SizedBox(height: 12),
-          Text(name, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 6),
-          Text(desc),
-          const SizedBox(height: 20),
-          if (_isAdmin) ...<Widget>[
-            FilledButton.icon(
-              onPressed: _saving ? null : _editGroup,
-              icon: const Icon(Icons.edit),
-              label: const Text('Edit group'),
-            ),
-            const SizedBox(height: 8),
-            FilledButton.icon(
-              onPressed: _saving ? null : _setPhoto,
-              icon: const Icon(Icons.photo_camera),
-              label: const Text('Set/Change photo'),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: _saving ? null : _removePhoto,
-              icon: const Icon(Icons.delete_outline),
-              label: const Text('Remove photo'),
-            ),
-          ],
-        ],
-      ),
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: widget.groupRepository.streamGroupDoc(widget.groupId),
+      builder:
+          (
+            BuildContext context,
+            AsyncSnapshot<DocumentSnapshot<Map<String, dynamic>>> snapshot,
+          ) {
+            final Map<String, dynamic> group =
+                snapshot.data?.data() ?? widget.groupData;
+            final String name = (group['name'] as String?) ?? '';
+            final String desc = (group['description'] as String?) ?? '';
+            final String? photoUrl = group['photoUrl'] as String?;
+            final bool canModerate = canModerateGroup(
+              currentUser: widget.currentUser,
+              group: group,
+            );
+            final bool isGeneral = group['isGeneral'] == true;
+            return Scaffold(
+              appBar: AppBar(title: const Text('Group Info')),
+              body: ListView(
+                padding: const EdgeInsets.all(16),
+                children: <Widget>[
+                  CircleAvatar(
+                    radius: 34,
+                    backgroundImage: photoUrl != null && photoUrl.isNotEmpty
+                        ? NetworkImage(photoUrl)
+                        : null,
+                    child: photoUrl == null || photoUrl.isEmpty
+                        ? Text(name.isEmpty ? '?' : name[0].toUpperCase())
+                        : null,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(name, style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 6),
+                  Text(desc),
+                  const SizedBox(height: 20),
+                  if (canModerate && !isGeneral) ...<Widget>[
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Allow students to share files'),
+                      subtitle: const Text(
+                        'Students can send images, PDFs, and videos',
+                      ),
+                      value:
+                          group['studentFileSharingEnabled'] as bool? ?? false,
+                      onChanged: _saving
+                          ? null
+                          : (bool enabled) {
+                              widget.groupRepository
+                                  .setStudentFileSharingEnabled(
+                                    groupId: widget.groupId,
+                                    enabled: enabled,
+                                  );
+                            },
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (_isAdmin) ...<Widget>[
+                    FilledButton.icon(
+                      onPressed: _saving ? null : _editGroup,
+                      icon: const Icon(Icons.edit),
+                      label: const Text('Edit group'),
+                    ),
+                    const SizedBox(height: 8),
+                    FilledButton.icon(
+                      onPressed: _saving ? null : _setPhoto,
+                      icon: const Icon(Icons.photo_camera),
+                      label: const Text('Set/Change photo'),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: _saving ? null : _removePhoto,
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Remove photo'),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          },
     );
   }
 }

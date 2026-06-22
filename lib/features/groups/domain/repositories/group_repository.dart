@@ -112,7 +112,18 @@ abstract class GroupRepository {
     required List<String> mutedUids,
   });
 
+  Future<void> setMemberMuted({
+    required String groupId,
+    required String memberUid,
+    required bool muted,
+  });
+
   Future<void> setOnlyAdminsCanMessage({
+    required String groupId,
+    required bool enabled,
+  });
+
+  Future<void> setStudentFileSharingEnabled({
     required String groupId,
     required bool enabled,
   });

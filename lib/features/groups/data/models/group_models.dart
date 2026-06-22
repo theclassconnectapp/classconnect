@@ -44,6 +44,8 @@ class GroupModel {
     required this.createdByUid,
     required this.createdAt,
     this.description,
+    this.mutedUids = const <String>[],
+    this.studentFileSharingEnabled = false,
   });
 
   final String id;
@@ -54,6 +56,8 @@ class GroupModel {
   final String createdByUid;
   final DateTime? createdAt;
   final String? description;
+  final List<String> mutedUids;
+  final bool studentFileSharingEnabled;
 
   factory GroupModel.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final Map<String, dynamic> data = doc.data() ?? <String, dynamic>{};
@@ -66,6 +70,11 @@ class GroupModel {
       createdByUid: data['createdByUid'] as String? ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       description: data['description'] as String?,
+      mutedUids: ((data['mutedUids'] as List<dynamic>?) ?? <dynamic>[])
+          .whereType<String>()
+          .toList(),
+      studentFileSharingEnabled:
+          data['studentFileSharingEnabled'] as bool? ?? false,
     );
   }
 }
