@@ -28,18 +28,6 @@ class MembersScreen extends StatefulWidget {
 }
 
 class _MembersScreenState extends State<MembersScreen> {
-  bool _isSuperAdmin(Map<String, dynamic> group) {
-    final String dept = (group['dept'] as String?) ?? '';
-    return widget.currentUser.role == UserRole.hod &&
-        widget.currentUser.dept == dept;
-  }
-
-  bool _isAdmin(Map<String, dynamic> group) {
-    final List<dynamic> admins =
-        (group['admins'] as List<dynamic>?) ?? <dynamic>[];
-    return admins.contains(widget.currentUser.uid) || _isSuperAdmin(group);
-  }
-
   Future<void> _toggleMute({
     required BuildContext context,
     required String memberUid,
@@ -76,6 +64,40 @@ class _MembersScreenState extends State<MembersScreen> {
     }
   }
 
+  Future<void> _toggleMessageLock({
+    required BuildContext context,
+    required bool onlyAdminsCanMessage,
+  }) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(
+          onlyAdminsCanMessage ? 'Allow all members?' : 'Restrict messages?',
+        ),
+        content: Text(
+          onlyAdminsCanMessage
+              ? 'All unmuted members will be able to send messages.'
+              : 'Only admins will be able to send messages.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(onlyAdminsCanMessage ? 'Allow all' : 'Restrict'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await widget.groupRepository.setOnlyAdminsCanMessage(
+      groupId: widget.groupId,
+      enabled: !onlyAdminsCanMessage,
+    );
+  }
+
   Future<void> _memberActions(
     BuildContext context, {
     required Map<String, dynamic> group,
@@ -83,7 +105,9 @@ class _MembersScreenState extends State<MembersScreen> {
     required String memberRole,
     required String memberName,
   }) async {
-    if (!_isAdmin(group)) return;
+    if (!canModerateGroup(currentUser: widget.currentUser, group: group)) {
+      return;
+    }
     final List<String> admins =
         ((group['admins'] as List<dynamic>?) ?? <dynamic>[]).cast<String>();
     final bool memberIsAdmin = admins.contains(memberUid);
@@ -176,20 +200,26 @@ class _MembersScreenState extends State<MembersScreen> {
               currentUser: widget.currentUser,
               group: liveGroup,
             );
+            final bool onlyAdminsCanMessage =
+                liveGroup['onlyAdminsCanMessage'] as bool? ?? false;
             return Scaffold(
               appBar: AppBar(
                 title: Text('Members - ${widget.groupTitle}'),
                 actions: <Widget>[
-                  if (_isAdmin(liveGroup))
-                    Switch(
-                      value:
-                          liveGroup['onlyAdminsCanMessage'] as bool? ?? false,
-                      onChanged: (bool enabled) {
-                        widget.groupRepository.setOnlyAdminsCanMessage(
-                          groupId: widget.groupId,
-                          enabled: enabled,
-                        );
-                      },
+                  if (canModerate)
+                    IconButton(
+                      icon: Icon(
+                        onlyAdminsCanMessage
+                            ? Icons.lock_outline
+                            : Icons.lock_open_outlined,
+                      ),
+                      tooltip: onlyAdminsCanMessage
+                          ? 'Only admins can message - tap to allow all'
+                          : 'All members can message - tap to restrict',
+                      onPressed: () => _toggleMessageLock(
+                        context: context,
+                        onlyAdminsCanMessage: onlyAdminsCanMessage,
+                      ),
                     ),
                 ],
               ),
@@ -226,7 +256,10 @@ class _MembersScreenState extends State<MembersScreen> {
                           final String email = (data['email'] as String?) ?? '';
                           final String role = (data['role'] as String?) ?? '';
                           final String? photoUrl = data['photoUrl'] as String?;
-                          final String uid = (data['uid'] as String?) ?? '';
+                          final String uid =
+                              (data['uid'] as String?)?.isNotEmpty == true
+                              ? data['uid'] as String
+                              : docs[index].id;
                           final bool memberIsAdmin = admins.contains(uid);
                           final bool memberIsMuted = muted.contains(uid);
                           final bool memberIsStudent =
