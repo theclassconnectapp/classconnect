@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/services/local_storage_service.dart';
@@ -125,7 +126,17 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> signInWithGoogle() async {
     emit(AuthLoading());
-    await _authRepository.signInWithGoogle();
+    try {
+      await _authRepository.signInWithGoogle();
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        emit(AuthUnauthenticated());
+        return;
+      }
+      rethrow;
+    } catch (_) {
+      emit(AuthUnauthenticated());
+    }
   }
 
   Future<void> onCollegePicked(String collegeId) async {
