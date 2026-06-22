@@ -520,10 +520,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               title: const Text('Forward'),
               onTap: () => Navigator.of(context).pop('forward'),
             ),
-            ListTile(
-              title: const Text('Copy'),
-              onTap: () => Navigator.of(context).pop('copy'),
-            ),
+            if (message.type == MessageType.text ||
+                message.type == MessageType.link)
+              ListTile(
+                title: const Text('Copy'),
+                onTap: () => Navigator.of(context).pop('copy'),
+              ),
             if (message.status == 'failed')
               ListTile(
                 leading: const Icon(
