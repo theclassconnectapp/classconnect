@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/animation/motion.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../college/presentation/screens/platform_pick_screen.dart';
 import '../../../college/domain/repositories/college_repository.dart'
     as college_domain;
@@ -69,6 +70,7 @@ class AuthGate extends StatelessWidget {
 
         // 5. Fully authenticated.
         if (state is AuthAuthenticated) {
+          sl<NotificationService>().initialize(uid: state.user.uid);
           if (state.isNewUser) {
             // Brand-new user just finished setup → welcome splash then dashboard.
             return WelcomeScreen(
